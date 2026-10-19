@@ -28,7 +28,7 @@ def generate_ethanol_dwg05(out_pdf, out_png):
     
     # Drawing Header
     cad_text(ax, W/2, H - 1.25, 'PIPING & INSTRUMENTATION DIAGRAM (P&ID) — DISTILLATION SYSTEM (C-201)', sz=6.6, bold=True)
-    cad_text(ax, W/2, H - 1.62, 'ISA-5.1 INSTRUMENTATION LOOPS: REFLUX CASCADE, SPLIT-RANGE PRESSURE, SUMP LEVEL & STEAM INTERLOCKS', sz=4.8, bold=False)
+    cad_text(ax, W/2, H - 1.62, 'ISA-5.1 INSTRUMENTATION LOOPS: TRAY 6 REFLUX CASCADE, SPLIT-RANGE PRESSURE, SUMP LEVEL & STEAM INTERLOCKS', sz=4.8, bold=False)
     
     # ═════════════════════════════════════════════════════════════════════════
     # EQUIPMENT DRAWINGS (P&ID SCHEMATIC LAYOUT)
@@ -58,7 +58,7 @@ def generate_ethanol_dwg05(out_pdf, out_png):
     # 2. FEED SYSTEM & PREHEATER E-101 (X=3.4, Y=9.75)
     cad_line(ax, 1.2, 9.75, 4.4, 9.75, lw=0.9)  # Feed line
     cad_arrow(ax, 2.0, 9.75, 2.4, 9.75, head_scale=6)
-    cad_text(ax, 1.8, 10.15, 'FEED 700 kmol/h\n(7.0 mol% EtOH)', sz=3.8, bold=True)
+    cad_text(ax, 1.8, 10.15, 'FEED 700 kmol/h\n(7.00 mol% EtOH)', sz=3.8, bold=True)
     
     # Feed Control Valve FCV-201
     cad_valve(ax, 3.0, 9.75, orientation='H', size=0.35, valve_type='CONTROL')
@@ -132,7 +132,7 @@ def generate_ethanol_dwg05(out_pdf, out_png):
     cad_valve(ax, 17.6, RPY, orientation='H', size=0.30, valve_type='CONTROL')
     cad_text(ax, 17.6, RPY - 0.45, 'LCV-203 (FC)', sz=3.4, bold=True)
     cad_arrow(ax, 18.9, RPY, 19.3, RPY, head_scale=6)
-    cad_text(ax, 19.4, RPY + 0.15, 'DISTILLATE PRODUCT\n(85 mol% EtOH)', sz=3.6, bold=True, ha='left')
+    cad_text(ax, 19.4, RPY + 0.15, 'DISTILLATE PRODUCT\n(82 mol% / 91.9 wt% EtOH)', sz=3.6, bold=True, ha='left')
     
     # 6. REBOILER E-103 (X=6.8, Y=4.2)
     RBX, RBY = 6.8, 4.2
@@ -187,14 +187,16 @@ def generate_ethanol_dwg05(out_pdf, out_png):
     cad_line(ax, 17.6, 11.45, 17.6, 10.75, lw=0.45, ls='--')
     cad_line(ax, 17.6, 10.05, 17.6, RPY + 0.25, lw=0.45, ls='--') # to LCV-203
     
-    # Loop 4: Sensitive Tray Temp & Reflux Cascade (TIC-204 -> FIC-204)
-    cad_instrument_bubble(ax, 11.6, 11.8, 'TT', '204', loc='FIELD', sz=3.8)
-    cad_instrument_bubble(ax, 12.6, 11.8, 'TIC', '204', loc='DCS', sz=3.8)
-    cad_instrument_bubble(ax, 13.6, 11.8, 'FIC', '204', loc='DCS', sz=3.8)
-    cad_line(ax, CX + CW/2, 11.8, 11.25, 11.8, lw=0.45, ls='--')
-    cad_line(ax, 11.95, 11.8, 12.25, 11.8, lw=0.45, ls='--')
-    cad_line(ax, 12.95, 11.8, 13.25, 11.8, lw=0.45, ls='--')
-    cad_line(ax, 13.6, 11.45, 13.6, RPY + 2.05, lw=0.45, ls='--') # to FCV-204
+    # Loop 4: Sensitive Tray 6 Temp & Reflux Cascade (TIC-204 -> FIC-204)
+    # Tray 6 is in rectifying section (elevation ~12.8 cm on column)
+    cad_instrument_bubble(ax, 11.6, 12.8, 'TT', '204', loc='FIELD', sz=3.8)
+    cad_instrument_bubble(ax, 12.6, 12.8, 'TIC', '204', loc='DCS', sz=3.8)
+    cad_instrument_bubble(ax, 13.6, 12.8, 'FIC', '204', loc='DCS', sz=3.8)
+    cad_line(ax, CX + CW/2, 12.8, 11.25, 12.8, lw=0.45, ls='--')
+    cad_line(ax, 11.95, 12.8, 12.25, 12.8, lw=0.45, ls='--')
+    cad_line(ax, 12.95, 12.8, 13.25, 12.8, lw=0.45, ls='--')
+    cad_line(ax, 13.6, 12.45, 13.6, RPY + 2.05, lw=0.45, ls='--') # to FCV-204
+    cad_text(ax, 12.6, 13.35, 'TRAY 6 TEMP CASCADE\n(RECTIFYING SECTION)', sz=3.2, bold=True, color='#004488')
     
     # Loop 5: Column Differential Pressure Transmitter (PDIT-205) & Reboiler Steam (FIC-206)
     cad_instrument_bubble(ax, 8.8, 13.2, 'PDIT', '205', loc='DCS', sz=3.4)
@@ -230,10 +232,10 @@ def generate_ethanol_dwg05(out_pdf, out_png):
         ['FT/FIC-201', 'Feed Flow to Column', '0 - 1000 kmol/h', '700.0 kmol/h', 'FCV-201 (Fail Closed)'],
         ['PT/PIC-202', 'Top Vapor Pressure', '0 - 200 kPa(a)', '101.325 kPa', 'Split: PCV-202A (FO) / B (FC)'],
         ['LT/LIC-203', 'Reflux Drum Level', '0 - 100 %', '50.0 % level', 'LCV-203 (Fail Closed)'],
-        ['TT/TIC-204', 'Tray 18 Temperature', '50 - 120 C', '79.2 C', 'Cascades to FIC-204'],
-        ['FT/FIC-204', 'Reflux Liquid Flow', '0 - 300 kmol/h', '167.7 kmol/h', 'FCV-204 (Fail Open - FO)'],
+        ['TT/TIC-204', 'Tray 6 Sensitive Temp', '50 - 120 C', '78.8 C', 'Cascades to Reflux FIC-204'],
+        ['FT/FIC-204', 'Reflux Liquid Flow', '0 - 300 kmol/h', '174.6 kmol/h', 'FCV-204 (Fail Open - FO)'],
         ['PDIT-205', 'Column Differential Press.', '0 - 30.0 kPa', '13.0 kPa', 'Alarm High @ 17.5 kPa'],
-        ['FT/FIC-206', 'Reboiler 3 bar Steam', '0 - 6,000 kg/h', '4,850 kg/h', 'FCV-206 (Fail Closed)'],
+        ['FT/FIC-206', 'Reboiler 3 bar Steam', '0 - 6,000 kg/h', '5,100 kg/h', 'FCV-206 (Fail Closed) w/ DP override'],
         ['LT/LIC-207', 'Bottoms Sump Level', '0 - 100 %', '50.0 % level', 'LCV-207 (Fail Closed)'],
         ['PSV-201A/B', 'Column Overpressure Relief', '0 - 0.50 MPa', '0.35 MPa(g)', 'Pop Action to Flare Header'],
     ]

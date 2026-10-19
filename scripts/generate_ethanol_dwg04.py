@@ -28,7 +28,7 @@ def generate_ethanol_dwg04(out_pdf, out_png):
                         'JU/ChE/ED/DWG-04', scale='AS NOTED', date='01 / 09 / 2026', sub_info=SUB_INFO)
     
     # ═════════════════════════════════════════════════════════════════════════
-    # VIEW A: TOP PLAN VIEW OF SINGLE-PASS SIEVE TRAY (SCALE 1:20)
+    # VIEW A: TOP PLAN VIEW OF SINGLE-PASS SIEVE TRAY (SCALE 1:25)
     # ═════════════════════════════════════════════════════════════════════════
     CX_A, CY_A = 5.2, 13.6
     R_TRAY = 2.4   # Radius representing 600 mm real -> Scale 1:25 (1 cm = 250 mm)
@@ -44,7 +44,7 @@ def generate_ethanol_dwg04(out_pdf, out_png):
     cad_line(ax, CX_A, CY_A - R_TRAY - 0.4, CX_A, CY_A + R_TRAY + 0.4, lw=0.35, ls='-.')
     
     # Segmental Downcomers (Left: Downcomer from tray above; Right: Downcomer to tray below)
-    # Downcomer chord at X = R_TRAY - 0.75 (Chord width 180 mm real)
+    # Downcomer chord at X = R_TRAY - 0.72 (Chord width 180 mm real)
     DX_IN = CX_A - R_TRAY + 0.72
     DX_OUT = CX_A + R_TRAY - 0.72
     
@@ -66,7 +66,6 @@ def generate_ethanol_dwg04(out_pdf, out_png):
     cad_text(ax, DX_OUT - 0.12, CY_A + y_chord - 0.3, 'CALMING\nZONE', sz=3.0, bold=False, ha='right')
     
     # Active Perforated Bubbling Area
-    # Draw representative array of holes
     for hx in np.arange(DX_IN + 0.40, DX_OUT - 0.30, 0.28):
         for hy in np.arange(CY_A - y_chord + 0.35, CY_A + y_chord - 0.35, 0.28):
             if (hx - CX_A)**2 + (hy - CY_A)**2 < (R_TRAY - 0.25)**2:
@@ -159,15 +158,16 @@ def generate_ethanol_dwg04(out_pdf, out_png):
         cad_line(ax, p[0] - 0.35, p[1], p[0] + 0.35, p[1], lw=0.3, ls='-.')
         cad_line(ax, p[0], p[1] - 0.35, p[0], p[1] + 0.35, lw=0.3, ls='-.')
         
-    cad_dim_h(ax, pts[0][0], pts[1][0], PY0 - 0.40, 'PITCH p = 12.5 mm', sz=3.8)
+    cad_dim_h(ax, pts[0][0], pts[1][0], PY0 - 0.40, 'PITCH p = 15.0 mm', sz=3.8)
     cad_text(ax, pts[2][0] + 0.8, pts[2][1] + 0.5, 'HOLE DIA dh = 5.0 mm\n(BURR-FREE PUNCHED)', sz=3.8, bold=True)
     
     # Explanatory Callouts
     spec_txt = (
         'PERFORATION SPECIFICATIONS:\n'
         '- Hole Diameter (dh): 5.0 mm (3/16") punched 304L SS sheet\n'
-        '- Pitch (p): 12.5 mm Equilateral Triangular (30 deg orientation)\n'
-        '- Hole-to-Active Area Ratio (Ah/Aa): 10.2 %\n'
+        '- Pitch (p): 15.0 mm Equilateral Triangular (30 deg orientation)\n'
+        '- Hole-to-Active Area Ratio (Ah/Aa): 10.1 %  [Ah = 0.089 m2]\n'
+        '- Total Perforation Holes: 4,530 Holes per tray floor\n'
         '- Sheet Thickness: 2.5 mm (12 B.W.G.)\n'
         '- Fabrication: Precision CNC gang-punched, smooth deburred top'
     )
@@ -184,7 +184,7 @@ def generate_ethanol_dwg04(out_pdf, out_png):
         ['Downcomer Area (Inlet / Outlet)', 'Ad', '0.124 (11.0 %)', 'm2'],
         ['Net Free Area (At - Ad)', 'An', '1.007', 'm2'],
         ['Active Bubbling Area', 'Aa', '0.883 (78.1 %)', 'm2'],
-        ['Total Perforation Hole Area', 'Ah', '0.090 (10.2 % Aa)', 'm2'],
+        ['Total Perforation Hole Area', 'Ah', '0.089 (10.1 % Aa)', 'm2'],
         ['Weir Length (Segmental Chord)', 'Lw', '840', 'mm'],
         ['Weir Height', 'hw', '50.0', 'mm'],
         ['Downcomer Clearance Height', 'hcl', '35.0', 'mm'],

@@ -123,14 +123,12 @@ def generate_ethanol_dwg06(out_pdf, out_png):
     cad_text(ax, IX0 + 1.8, 17.0, 'VIEW 3: 3D ISOMETRIC PLANT ASSEMBLY & STRUCTURAL INTEGRATION', sz=5.5, bold=True)
     cad_text(ax, IX0 + 1.8, 16.65, 'AXONOMETRIC PERSPECTIVE VIEW SHOWING COLUMN, LOOP & SKID', sz=4.2, bold=True)
     
-    # Isometric Transformation: iso_x = x - y*cos(30), iso_y = z + y*sin(30)
     # Axonometric projection angles: 30 deg left, 30 deg right
     ANG = np.radians(30)
     cos30 = np.cos(ANG)
     sin30 = np.sin(ANG)
     
     def to_iso(x, y, z):
-        # x is right-front, y is left-back, z is vertical
         u = IX0 + (x - y) * cos30 * 0.70
         v = IY0 + (x + y) * sin30 * 0.70 + z * 0.72
         return u, v
@@ -146,7 +144,6 @@ def generate_ethanol_dwg06(out_pdf, out_png):
     # Base Skirt Ring
     cad_circle(ax, to_iso(0, 0, 0)[0], to_iso(0, 0, 0)[1], COL_R * 0.65, lw=0.85)
     # Column Body (from z=0.5 to z=13.5)
-    z_pts = np.linspace(0.5, 13.5, 15)
     u_c, v_c_bot = to_iso(0, 0, 0.5)
     _, v_c_top = to_iso(0, 0, 13.5)
     

@@ -93,11 +93,11 @@ Developed a preliminary ethanol-water separation process for a $700\ \text{kmol/
 Selected a preliminary reflux ratio of $3.0$ and a column internal diameter of approximately $1.20\ \text{m}$. Developed a process flow diagram covering the feed tank, pump, distillation column, reboiler, condenser and reflux drum. Documented the design basis, preliminary equipment sizing and assumptions for process-engineering review.
 
 #### Drawing Catalog
-- **DWG 01**: Process Flow Diagram (PFD) & Heat-Mass Balances (T-101, P-101, E-101, C-201, E-102, V-101, P-102, E-103, E-104 with 8 stream tables)
-- **DWG 02**: VLE Analysis (Wilson Model) & McCabe-Thiele Stages (Azeotrope pinch point, $R=3.0$ ROL, $q=1.0$ feed line, 15 theoretical stages, Murphree efficiency $65\%$, 24 actual sieve trays)
+- **DWG 01**: Process Flow Diagram (PFD) & Heat-Mass Balances (T-101, P-101, E-101, C-201, E-102, V-101, P-102, E-103, E-104 with 8 stream tables, 100.000% mass balance closure)
+- **DWG 02**: VLE Analysis (Wilson Model) & McCabe-Thiele Stages (Azeotrope pinch point, $R=3.0$ ROL, $q=1.0$ feed line, 14 trays + reboiler = 15 theoretical stages, Murphree efficiency $65\%$, 24 actual sieve trays)
 - **DWG 03**: Distillation Column General Arrangement & Elevation (Dual-view sectional elevation and exterior elevation with platform cages and ASME B16.5 nozzle schedule)
-- **DWG 04**: Sieve Tray Hydraulic Design & Internal Assembly (Top plan view, crossflow froth section, $5\ \text{mm}$ hole on $12.5\ \text{mm}$ triangular pitch, $68.3\%$ flooding check)
-- **DWG 05**: Piping & Instrumentation Diagram (P&ID) with ISA-5.1 Loops (Split-range pressure, reflux cascade, sump level, column DP interlock, safety relief)
+- **DWG 04**: Sieve Tray Hydraulic Design & Internal Assembly (Top plan view, crossflow froth section, $5\ \text{mm}$ hole on $15.0\ \text{mm}$ triangular pitch, $10.1\%$ hole area, $68.3\%$ flooding check)
+- **DWG 05**: Piping & Instrumentation Diagram (P&ID) with ISA-5.1 Loops (Split-range pressure, Tray 6 rectifying reflux cascade, sump level, column DP interlock, safety relief)
 - **DWG 06**: Reboiler & Condenser Details & 3D Isometric Assembly (Vertical thermosiphon reboiler TEMA BEM, condenser TEMA AEL, 3D spatial isometric plant assembly)
 
 ---

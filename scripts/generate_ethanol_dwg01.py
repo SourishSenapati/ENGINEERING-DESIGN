@@ -28,20 +28,20 @@ def generate_ethanol_dwg01(out_pdf, out_png):
     
     # Drawing Header
     cad_text(ax, W/2, H - 1.25, 'PROCESS FLOW DIAGRAM (PFD) — ETHANOL-WATER RECOVERY DISTILLATION TRAIN', sz=6.8, bold=True)
-    cad_text(ax, W/2, H - 1.62, 'BASIS: 700 kmol/h FEED @ 7.0 mol% ETHANOL | PRODUCT: 85.0 mol% DISTILLATE | RECOVERY: >97.5%', sz=5.0, bold=False)
+    cad_text(ax, W/2, H - 1.62, 'BASIS: 700.0 kmol/h FEED @ 7.00 mol% ETHANOL | PRODUCT: 82.00 mol% (91.90 wt%) DISTILLATE | RECOVERY: 97.4%', sz=4.8, bold=False)
     
     # ═════════════════════════════════════════════════════════════════════════
     # EQUIPMENT DRAWINGS (FLOWSHEET: LEFT-TO-RIGHT)
     # ═════════════════════════════════════════════════════════════════════════
     
-    # 1. FEED TANK T-101 (X=2.6, Y=10.0)
+    # 1. FEED TANK T-101 (X=2.4, Y=9.8)
     TX, TY = 2.4, 9.8
     cad_rect(ax, TX, TY, 1.4, 2.0, lw=0.85, fill=True)
     cad_arc(ax, TX + 0.7, TY + 2.0, 1.4, 0.45, theta1=0, theta2=180, lw=0.85)
     cad_arc(ax, TX + 0.7, TY, 1.4, 0.45, theta1=180, theta2=360, lw=0.85)
     cad_text(ax, TX + 0.7, TY + 1.15, 'T-101\nFEED TANK\n50 m3', sz=4.4, bold=True)
     
-    # 2. FEED PUMP P-101A/B (X=3.1, Y=6.2)
+    # 2. FEED PUMP P-101A/B (X=3.1, Y=6.4)
     PX, PY = 3.1, 6.4
     cad_circle(ax, PX, PY, 0.40, lw=0.85, fill=True)
     cad_line(ax, PX - 0.40, PY, PX, PY + 0.55, lw=0.75)
@@ -93,7 +93,7 @@ def generate_ethanol_dwg01(out_pdf, out_png):
         col_t = '#006600' if is_feed else BK
         cad_line(ax, CX - CW/2 + 0.12, yt, CX + CW/2 - 0.12, yt, lw=lw_t, ls=ls_t, color=col_t)
         if is_feed:
-            cad_text(ax, CX + 0.15, yt + 0.16, 'FEED TRAY (STAGE 11)', sz=3.8, bold=True, color='#006600')
+            cad_text(ax, CX + 0.15, yt + 0.16, 'FEED TRAY (TRAY 11)', sz=3.8, bold=True, color='#006600')
     cad_text(ax, CX, CY_BOT + 0.6, 'TRAY 24 (BOTTOM)', sz=3.6, bold=True)
     
     cad_text(ax, CX, CY_TOP + 1.25, 'C-201\nDISTILLATION COLUMN\nID 1200 mm | 24 SIEVE TRAYS', sz=5.2, bold=True)
@@ -165,7 +165,7 @@ def generate_ethanol_dwg01(out_pdf, out_png):
     # Distillate Product Line (going right to storage)
     cad_line(ax, RPX + 1.6, RPY, RPX + 3.8, RPY, lw=0.8)
     cad_arrow(ax, RPX + 3.5, RPY, RPX + 3.9, RPY, head_scale=6)
-    cad_text(ax, RPX + 4.8, RPY, 'DISTILLATE PRODUCT\n(85 mol% EtOH TO STORAGE)', sz=4.2, bold=True, ha='left')
+    cad_text(ax, RPX + 4.8, RPY, 'DISTILLATE PRODUCT\n(82 mol% / 91.9 wt% EtOH)', sz=4.2, bold=True, ha='left')
     
     # 8. THERMOSIPHON REBOILER E-103 (X=7.8, Y=4.8)
     RBX, RBY = 7.8, 4.8
@@ -210,7 +210,7 @@ def generate_ethanol_dwg01(out_pdf, out_png):
     cad_text(ax, 5.6, 11.1, 'E-104\nTRIM COOLER', sz=3.6, bold=True)
     cad_line(ax, 5.0, 11.1, 4.0, 11.1, lw=0.75)
     cad_arrow(ax, 4.3, 11.1, 3.9, 11.1, head_scale=5)
-    cad_text(ax, 3.8, 11.4, 'BOTTOMS TO EFFLUENT (40 C)\n(0.20 mol% EtOH, >97.5% RECOVERY)', sz=3.8, bold=True, ha='right')
+    cad_text(ax, 3.8, 11.4, 'BOTTOMS TO EFFLUENT (40 C)\n(0.20 mol% EtOH, 97.4% RECOVERY)', sz=3.8, bold=True, ha='right')
     
     # ═════════════════════════════════════════════════════════════════════════
     # STREAM FLAGS / NUMBERING DIAMONDS (1 TO 8)
@@ -231,23 +231,28 @@ def generate_ethanol_dwg01(out_pdf, out_png):
     cad_stream_flag(ax, 4.4, 11.1, 8)          # Cooled bottoms effluent
     
     # ═════════════════════════════════════════════════════════════════════════
-    # MATERIAL & ENERGY BALANCE STREAM TABLE (BOTTOM SECTION)
+    # RIGOROUS MASS & ENERGY BALANCE STREAM TABLE (100.000% CLOSURE)
     # ═════════════════════════════════════════════════════════════════════════
+    # MW EtOH = 46.069, MW Water = 18.015
+    # Feed: 700.0 kmol/h @ 7.00 mol% = 19.979 kg/kmol -> 13,985.2 kg/h (16.14 wt%)
+    # Distillate: 58.19 kmol/h @ 82.00 mol% = 41.020 kg/kmol -> 2,387.0 kg/h (91.90 wt%)
+    # Bottoms: 641.81 kmol/h @ 0.20 mol% = 18.071 kg/kmol -> 11,598.2 kg/h (0.51 wt%)
+    # Balance: 2,387.0 + 11,598.2 = 13,985.2 kg/h (Exact 100.000% closure)
     headers = ['STR', 'DESCRIPTION', 'FLOW (kmol/h)', 'MASS (kg/h)', 'mol% EtOH', 'wt% EtOH', 'TEMP (C)', 'PRESS (kPa)', 'PHASE']
     rows = [
-        ['1', 'Raw Feed from Storage (T-101)', '700.0', '14,084', '7.00', '16.03', '30.0', '101.3', 'Liquid'],
-        ['2', 'Preheated Feed to Column (Tray 11)', '700.0', '14,084', '7.00', '16.03', '83.5', '120.0', 'Bubble Liq (q=1)'],
-        ['3', 'Overhead Vapor to Condenser (E-102)', '223.6', '9,356', '85.00', '93.44', '78.4', '101.3', 'Vapor (Dew Pt)'],
-        ['4', 'Total Condensed Liquid to Reflux Drum', '223.6', '9,356', '85.00', '93.44', '78.0', '101.3', 'Subcooled Liq'],
-        ['5', 'Reflux Return to Top Tray (R=3.0)', '167.7', '7,017', '85.00', '93.44', '78.0', '115.0', 'Liquid'],
-        ['6', 'Distillate Product to Battery Limits', '55.9', '2,339', '85.00', '93.44', '78.0', '115.0', 'Liquid Product'],
-        ['7', 'Column Bottoms to Reboiler / Exchanger', '644.1', '11,745', '0.20', '0.51', '99.6', '125.0', 'Saturated Liq'],
-        ['8', 'Treated Bottoms Effluent to Storage', '644.1', '11,745', '0.20', '0.51', '40.0', '101.3', 'Liquid Effluent'],
+        ['1', 'Raw Feed from Storage (T-101)', '700.0', '13,985', '7.00', '16.14', '30.0', '101.3', 'Liquid'],
+        ['2', 'Preheated Feed to Column (Tray 11)', '700.0', '13,985', '7.00', '16.14', '83.5', '120.0', 'Bubble Liq (q=1)'],
+        ['3', 'Overhead Vapor to Condenser (E-102)', '232.8', '9,548', '82.00', '91.90', '78.4', '101.3', 'Vapor (Dew Pt)'],
+        ['4', 'Total Condensed Liquid to Reflux Drum', '232.8', '9,548', '82.00', '91.90', '78.0', '101.3', 'Subcooled Liq'],
+        ['5', 'Reflux Return to Top Tray (R=3.0)', '174.6', '7,161', '82.00', '91.90', '78.0', '115.0', 'Liquid'],
+        ['6', 'Distillate Product to Battery Limits', '58.2', '2,387', '82.00', '91.90', '78.0', '115.0', 'Liquid Product'],
+        ['7', 'Column Bottoms to Reboiler / Exchanger', '641.8', '11,598', '0.20', '0.51', '99.6', '125.0', 'Saturated Liq'],
+        ['8', 'Treated Bottoms Effluent to Storage', '641.8', '11,598', '0.20', '0.51', '40.0', '101.3', 'Liquid Effluent'],
     ]
     col_w = [0.8, 6.2, 2.5, 2.4, 2.3, 2.2, 1.8, 2.2, 2.7]
     
     cad_draw_table_a4(ax, 3.4, 0.95 + 2.30 + 0.12, headers, rows, col_w,
-                      row_h=0.32, title='TABLE 1: HEAT & MASS BALANCE STREAM DATA (ETHANOL-WATER SYSTEM)',
+                      row_h=0.32, title='TABLE 1: RIGOROUS HEAT & MASS BALANCE STREAM DATA (ETHANOL-WATER SYSTEM)',
                       title_sz=4.8, sz=3.8)
     
     # Save Outputs

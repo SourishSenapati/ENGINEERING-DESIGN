@@ -150,7 +150,8 @@ def draw_a4_border(ax):
     # Inner Border
     cad_rect(ax, 0.8, 0.8, W - 1.6, H - 1.6, lw=0.8)
 
-def draw_a4_title_block(ax, dwg_title, dwg_no, scale='1:50 METRIC'):
+def draw_a4_title_block(ax, dwg_title, dwg_no, scale='1:50 METRIC', date='29 / 09 / 2026',
+                        sub_info='PACKED ABSORBER (C-101)  |  0.25 m3/s GAS (2% Br2)  |  WATER: 17.25 kg/s  |  ASME SEC VIII DIV 1 / B16.5'):
     TB_X = 0.8
     TB_Y = 0.8
     TB_W = W - 1.6  # 28.1 cm
@@ -201,11 +202,11 @@ def draw_a4_title_block(ax, dwg_title, dwg_no, scale='1:50 METRIC'):
     cad_text(ax, TB_X + TB_W * 0.745, TB_Y + 0.73, dwg_no, sz=5.5, bold=True)
     # Col 4: Date
     cad_text(ax, TB_X + TB_W * 0.92, TB_Y + 0.97, 'DATE', sz=4.2, bold=True)
-    cad_text(ax, TB_X + TB_W * 0.92, TB_Y + 0.73, '29 / 09 / 2026', sz=5.5, bold=True)
+    cad_text(ax, TB_X + TB_W * 0.92, TB_Y + 0.73, date, sz=5.5, bold=True)
     
     # Row 4: Standards and Baseline Information
     cad_text(ax, TB_X + TB_W * 0.50, TB_Y + 0.28,
-             'PACKED ABSORBER (C-101)  |  0.25 m3/s GAS (2% Br2)  |  WATER: 17.25 kg/s  |  ASME SEC VIII DIV 1 / B16.5',
+             sub_info,
              sz=4.8, bold=True)
 
 def cad_draw_table_a4(ax, x, y, headers, rows, col_widths, row_h=0.38, title=None, title_sz=5.0, sz=4.2):

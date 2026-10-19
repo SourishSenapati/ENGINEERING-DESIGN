@@ -1,53 +1,63 @@
-# LICENSES
+# EDUCATIONAL & ACADEMIC LICENSE
+## (Non-Commercial with Mandatory Attribution)
 
-This repository contains two distinct categories of work, each licensed under appropriate open-source and open-content terms:
-
-1. **Source Code & CAD Generation Scripts** (e.g., Python scripts, utilities, build tools) are licensed under the **MIT License**.
-2. **Engineering Designs, CAD Blueprints, Drawings, Diagrams & Technical Documentation** (e.g., PDF blueprints, PNG renders, CAD layouts, specifications, P&IDs, PFDs) are licensed under the **Creative Commons Attribution 4.0 International License (CC BY 4.0)**.
-
----
-
-## 1. MIT LICENSE (Source Code & Scripts)
-
-Copyright (c) 2026 Sourish Senapati
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+**Copyright (c) 2026 Sourish Senapati**  
+*Department of Chemical Engineering, Jadavpur University, Kolkata, India.*  
+*GitHub: [@SourishSenapati](https://github.com/SourishSenapati)*
 
 ---
 
-## 2. CREATIVE COMMONS ATTRIBUTION 4.0 INTERNATIONAL (CC BY 4.0)
-### (Engineering Drawings, CAD Blueprints, Process Flowsheets, P&IDs & Technical Documentation)
+### CORE LICENSE GRANT & RESTRICTIONS
 
-Copyright (c) 2026 Sourish Senapati.
-Department of Chemical Engineering, Jadavpur University.
+Permission is hereby granted, free of charge, to any person obtaining a copy of this repository, including all engineering designs, CAD blueprints, drawings, flowsheets (PFDs), instrumentation diagrams (P&IDs), 3D isometric models, specifications, documentation, and underlying source code/scripts (collectively, the "Work"), **SUBJECT STRICTLY TO THE FOLLOWING CONDITIONS**:
 
-You are free to:
-- **Share** — copy and redistribute the material in any medium or format for any purpose, even commercially.
-- **Adapt** — remix, transform, and build upon the material for any purpose, even commercially.
+#### 1. STRICTLY FOR EDUCATIONAL & ACADEMIC USE ONLY
 
-Under the following terms:
-- **Attribution** — You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
-- **No additional restrictions** — You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.
+- The Work is free to use, study, reference, reproduce, and adapt **ONLY** for non-commercial educational, academic, classroom instruction, scholarly research, or personal learning purposes.
+- **COMMERCIAL USE IS STRICTLY PROHIBITED**: You may NOT use, distribute, sublicense, sell, fabricate from, or incorporate any part of this Work (in whole or in part, modified or unmodified) for commercial purposes, industrial fabrication, profit-generating ventures, or within proprietary commercial products without explicit, prior written authorization from the copyright holder.
 
-### Notices:
-You do not have to comply with the license for elements of the material in the public domain or where your use is permitted by an applicable exception or limitation.
-No warranties are given. The license may not give you all of the permissions necessary for your intended use. For example, other rights such as publicity, privacy, or moral rights may limit how you use the material.
+#### 2. MANDATORY ATTRIBUTION / CREDIT
 
-The full legal code of Creative Commons Attribution 4.0 International is accessible at:
-https://creativecommons.org/licenses/by/4.0/legalcode
+- Any academic paper, thesis, report, coursework, lecture slide, public demonstration, digital distribution, or derivative work that uses, references, or builds upon this Work **MUST** clearly and prominently give full attribution and credit to **Sourish Senapati**.
+- The attribution must retain all original copyright notices, department affiliations, and a direct link to the original repository:
+  `https://github.com/SourishSenapati/ENGINEERING-DESIGN`
+
+---
+
+### MANDATORY ATTRIBUTION NOTICE
+
+Whenever citing, referencing, or reproducing any portion of these designs or scripts, include the following attribution block:
+
+> **Engineering Design & Blueprints by:**  
+> **Sourish Senapati**  
+> *Department of Chemical Engineering, Jadavpur University*  
+> Repository: [SourishSenapati/ENGINEERING-DESIGN](https://github.com/SourishSenapati/ENGINEERING-DESIGN)  
+> Licensed for Non-Commercial Educational Use Only with Mandatory Attribution.
+
+---
+
+### APPLICABLE LICENSES BY ASSET TYPE
+
+#### A. Engineering Designs, CAD Blueprints, Diagrams & Technical Documentation
+
+All drawings (PDF and PNG formats), 2D/3D mechanical arrangements, P&IDs, PFDs, fabrication details, and specifications are licensed under:
+
+**Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)**
+
+- **NonCommercial**: You may not use the material for commercial purposes.
+- **Attribution**: You must give appropriate credit to Sourish Senapati, provide a link to the license, and indicate if changes were made.
+- Full Legal Code: https://creativecommons.org/licenses/by-nc/4.0/legalcode
+
+#### B. CAD Generation Scripts & Source Code
+
+All Python scripts, utilities, and build tools (`scripts/`, `build_all_absorber_drawings.py`, etc.) are licensed under the **Educational Non-Commercial Source License**:
+
+- Free to run, modify, and learn from exclusively for educational and non-commercial academic research.
+- Redistribution of scripts, in original or modified form, must retain this copyright and permission notice and credit Sourish Senapati.
+- Commercial exploitation, bundling into paid software, or proprietary re-licensing is strictly prohibited.
+
+---
+
+### DISCLAIMER OF WARRANTY
+
+THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHOR OR COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS IN THE WORK.

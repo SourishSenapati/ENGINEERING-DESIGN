@@ -1,6 +1,6 @@
 # Chemical & Process Equipment Engineering Designs & CAD Blueprints
 
-[![License: Dual MIT / CC BY 4.0](https://img.shields.io/badge/License-MIT%20%7C%20CC%20BY%204.0-blue.svg)](LICENSE)
+[![License: Educational Non-Commercial Only](https://img.shields.io/badge/License-Educational%20Only%20(CC%20BY--NC%204.0)-red.svg)](LICENSE)
 [![Standards: ASME Sec VIII Div 1](https://img.shields.io/badge/Standards-ASME%20Sec%20VIII%20Div%201-red.svg)](https://www.asme.org)
 [![Flanges: ASME B16.5](https://img.shields.io/badge/Flanges-ASME%20B16.5%20Class%20150-orange.svg)](https://www.asme.org)
 [![Instrumentation: ISA-5.1](https://img.shields.io/badge/P%26ID-ISA--5.1-green.svg)](https://www.isa.org)
@@ -195,13 +195,18 @@ All drawings in this repository conform to the following international and indus
 
 ## Licensing & Intellectual Property
 
-This repository utilizes a dual-licensing structure to address both software and engineering design rights:
+This repository is licensed strictly for **Non-Commercial Educational & Academic Use Only with Mandatory Attribution**:
 
-1. **Source Code & CAD Generation Scripts**:
-   Licensed under the **[MIT License](LICENSE)**. You are free to inspect, run, modify, distribute, and integrate the Python CAD generation scripts into personal or commercial applications.
+1. **Educational & Academic Use Only**:
+   Free of charge strictly for classroom instruction, university coursework, academic research, and personal learning. Any commercial use, industrial exploitation, or inclusion in proprietary commercial tools is **strictly prohibited** without explicit, prior written consent from the author.
 
-2. **Engineering Designs, CAD Blueprints, Flowsheets & Technical Documentation**:
-   Licensed under the **[Creative Commons Attribution 4.0 International License (CC BY 4.0)](LICENSE)**. You are free to share, copy, adapt, and build upon the mechanical drawings, P&IDs, PFDs, and equipment specifications, provided appropriate credit is given to the author.
+2. **Mandatory Attribution / Credit**:
+   Any use, reference, lecture, presentation, or derivative work **must prominently credit Sourish Senapati** (Department of Chemical Engineering, Jadavpur University) and link back to this repository.
+
+- **CAD Blueprints, Flowsheets & Documentation**: Licensed under **[CC BY-NC 4.0 (Creative Commons Attribution-NonCommercial 4.0 International)](LICENSE)**.
+- **Source Code & Parametric CAD Scripts**: Licensed under the **[Educational Non-Commercial Source License](LICENSE)**.
+
+See the complete **[LICENSE](LICENSE)** file for full terms, conditions, and citation formats.
 
 ---
 

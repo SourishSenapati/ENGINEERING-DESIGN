@@ -17,13 +17,16 @@ export function activate(context: vscode.ExtensionContext) {
     )
   );
 
-  // Register commands for convenience
+  // Register commands
   context.subscriptions.push(
     vscode.commands.registerCommand('cadNativeViewer.openWithCADViewer', async (uri?: vscode.Uri) => {
       const targetUri = uri || vscode.window.activeTextEditor?.document.uri;
       if (targetUri) {
         await vscode.commands.executeCommand('vscode.openWith', targetUri, 'cad.nativeViewer');
       }
+    }),
+    vscode.commands.registerCommand('cadNativeViewer.resetView', () => {
+      vscode.window.showInformationMessage('Use FIT button in CAD viewer ribbon to reset view.');
     })
   );
 }
@@ -49,7 +52,6 @@ class CADNativeEditorProvider implements vscode.CustomReadonlyEditorProvider {
     const webview = webviewPanel.webview;
     const documentDir = path.dirname(document.uri.fsPath);
 
-    // Allow the webview to access extension resources and the directory containing the file
     webview.options = {
       enableScripts: true,
       localResourceRoots: [
@@ -61,7 +63,6 @@ class CADNativeEditorProvider implements vscode.CustomReadonlyEditorProvider {
 
     webview.html = this.getHtmlForWebview(webviewPanel, document.uri);
 
-    // Handle messages from the webview
     const messageListener = webview.onDidReceiveMessage(async (message) => {
       switch (message.type) {
         case 'ready': {
@@ -84,13 +85,15 @@ class CADNativeEditorProvider implements vscode.CustomReadonlyEditorProvider {
             const saveUri = await vscode.window.showSaveDialog({
               defaultUri,
               filters: {
-                '3D Models': [message.format || 'glb']
+                '3D Models & Documents': [message.format || 'glb']
               }
             });
             if (saveUri) {
-              const buffer = Buffer.from(message.data);
+              const buffer = typeof message.data === 'string'
+                ? Buffer.from(message.data, 'utf-8')
+                : Buffer.from(message.data);
               await vscode.workspace.fs.writeFile(saveUri, buffer);
-              vscode.window.showInformationMessage(`CAD Model exported successfully to ${path.basename(saveUri.fsPath)}`);
+              vscode.window.showInformationMessage(`Exported successfully to ${path.basename(saveUri.fsPath)}`);
             }
           } catch (err: any) {
             vscode.window.showErrorMessage(`Export failed: ${err?.message || err}`);
@@ -114,8 +117,6 @@ class CADNativeEditorProvider implements vscode.CustomReadonlyEditorProvider {
 
     try {
       const fileBytes = await vscode.workspace.fs.readFile(uri);
-
-      // Search for companion 3D files (especially for .sldprt / .sldasm)
       const companion = await this.resolveCompanion(documentDir, baseName, ext);
 
       webviewPanel.webview.postMessage({
@@ -139,7 +140,6 @@ class CADNativeEditorProvider implements vscode.CustomReadonlyEditorProvider {
       return null;
     }
 
-    // Candidate folders to search for matching exports
     const searchDirs = [
       documentDir,
       path.resolve(documentDir, '..', 'step'),
@@ -154,7 +154,6 @@ class CADNativeEditorProvider implements vscode.CustomReadonlyEditorProvider {
     for (const dir of searchDirs) {
       if (!fs.existsSync(dir)) continue;
 
-      // 1. Direct match: baseName + targetExt
       for (const targetExt of extensionsToLookFor) {
         const candidate = path.join(dir, `${baseName}${targetExt}`);
         if (fs.existsSync(candidate)) {
@@ -169,7 +168,6 @@ class CADNativeEditorProvider implements vscode.CustomReadonlyEditorProvider {
         }
       }
 
-      // 2. If it's an assembly (.sldasm) and has a reactor/master step in the step folder
       if (ext === '.sldasm') {
         const files = fs.readdirSync(dir);
         const stepAssembly = files.find(f => f.toLowerCase().endsWith('.step') || f.toLowerCase().endsWith('.stp'));
@@ -236,7 +234,7 @@ class CADNativeEditorProvider implements vscode.CustomReadonlyEditorProvider {
       </div>
     </div>
 
-    <!-- Center View Presets -->
+    <!-- Center View & Shading Controls -->
     <div class="header-center">
       <div class="btn-group" role="group">
         <button id="btn-view-iso" class="btn" title="Isometric Projection">ISO</button>
@@ -255,15 +253,30 @@ class CADNativeEditorProvider implements vscode.CustomReadonlyEditorProvider {
         <button id="btn-mode-wire" class="btn" title="Technical Wireframe">WIRE</button>
         <button id="btn-mode-xray" class="btn" title="X-Ray Ghosted">X-RAY</button>
       </div>
+
+      <div class="divider"></div>
+
+      <!-- Theme Switcher -->
+      <div class="btn-group" role="group">
+        <button id="btn-theme-dark" class="btn active" title="Industrial Dark Theme">DARK</button>
+        <button id="btn-theme-light" class="btn" title="Studio Light Theme">LIGHT</button>
+        <button id="btn-theme-blueprint" class="btn" title="Technical Blueprint Theme">BLUEPRINT</button>
+      </div>
     </div>
 
-    <!-- Right Utility Group -->
+    <!-- Right Engineering Toolset -->
     <div class="header-right">
+      <button id="btn-toggle-explode" class="btn tool-btn" title="Exploded Assembly View">
+        <span class="icon">&#128165;</span> EXPLODE
+      </button>
       <button id="btn-toggle-section" class="btn tool-btn" title="Toggle 3-Axis Cross-Section Slicing">
         <span class="icon">&#9986;</span> SLICE
       </button>
-      <button id="btn-toggle-measure" class="btn tool-btn" title="Measurement Caliper">
+      <button id="btn-toggle-measure" class="btn tool-btn" title="Precision Metrology Caliper">
         <span class="icon">&#128207;</span> MEASURE
+      </button>
+      <button id="btn-toggle-markup" class="btn tool-btn" title="3D Engineering Redlines & Review Pins">
+        <span class="icon">&#128204;</span> MARKUP
       </button>
       <button id="btn-toggle-tree" class="btn tool-btn active" title="Component Hierarchy Tree">
         <span class="icon">&#9776;</span> TREE
@@ -304,13 +317,33 @@ class CADNativeEditorProvider implements vscode.CustomReadonlyEditorProvider {
     <div id="viewport-container" class="viewport-container">
       <canvas id="cad-canvas"></canvas>
 
-      <!-- Orientation ViewCube -->
-      <div id="viewcube-container" class="viewcube-container"></div>
+      <!-- Interactive 3D Orientation ViewCube -->
+      <div id="viewcube-container" class="viewcube-container" title="Click faces, edges or corners to rotate view">
+        <canvas id="viewcube-canvas" width="110" height="110"></canvas>
+      </div>
 
-      <!-- Coordinate Tripod -->
-      <div id="axes-tripod" class="axes-tripod"></div>
+      <!-- Exploded View Floating Panel -->
+      <div id="explode-panel" class="floating-panel hidden">
+        <div class="panel-header">
+          <span>EXPLODED ASSEMBLY DISASSEMBLY</span>
+          <button id="btn-close-explode" class="close-btn">&times;</button>
+        </div>
+        <div class="panel-body">
+          <div class="slider-control">
+            <div class="flex-between">
+              <span>Separation Distance:</span>
+              <strong id="explode-val">0%</strong>
+            </div>
+            <input type="range" id="explode-slider" min="0" max="100" value="0">
+          </div>
+          <div class="flex-row gap-2 mt-2">
+            <button id="btn-animate-explode" class="btn full-btn">Play / Pause Cycle</button>
+            <button id="btn-reset-explode" class="btn full-btn">Collapse</button>
+          </div>
+        </div>
+      </div>
 
-      <!-- Interactive Section Slicing Floating Panel -->
+      <!-- Dynamic Section Slicing Floating Panel -->
       <div id="section-panel" class="floating-panel hidden">
         <div class="panel-header">
           <span>CROSS-SECTION SLICING (DYNAMIC CUTAWAY)</span>
@@ -333,26 +366,55 @@ class CADNativeEditorProvider implements vscode.CustomReadonlyEditorProvider {
             <button id="slice-z-flip" class="mini-btn" title="Invert Normal">Flip</button>
           </div>
           <div class="slice-options">
-            <label><input type="checkbox" id="slice-show-caps" checked> Fill Cut Surfaces (Caps)</label>
+            <label><input type="checkbox" id="slice-show-caps" checked> Solid Cross-Section Cap Filling</label>
           </div>
         </div>
       </div>
 
-      <!-- Measurement Floating Tooltip / Results -->
+      <!-- Precision Metrology & Caliper Panel -->
       <div id="measurement-panel" class="floating-panel hidden">
         <div class="panel-header">
-          <span>PRECISION MEASUREMENT CALIPER</span>
+          <span>PRECISION METROLOGY CALIPER</span>
           <button id="btn-close-measure" class="close-btn">&times;</button>
         </div>
         <div class="panel-body">
-          <p class="instruction-text">Click two vertices/points on the 3D model to calculate 3D distance.</p>
+          <div class="measure-type-selector">
+            <label><input type="radio" name="measure-mode" value="distance" checked> 2-Pt Distance</label>
+            <label><input type="radio" name="measure-mode" value="angle"> 3-Pt Angle</label>
+          </div>
+          <p id="measure-instructions" class="instruction-text">Click two vertices/points on the 3D model to calculate 3D Euclidean distance.</p>
           <div class="measure-results">
-            <div class="res-row"><span>Distance (D):</span> <strong id="m-dist">0.000 mm</strong></div>
-            <div class="res-row"><span>&Delta;X:</span> <span id="m-dx">0.000 mm</span></div>
-            <div class="res-row"><span>&Delta;Y:</span> <span id="m-dy">0.000 mm</span></div>
-            <div class="res-row"><span>&Delta;Z:</span> <span id="m-dz">0.000 mm</span></div>
+            <div id="meas-dist-block">
+              <div class="res-row"><span>Distance (D):</span> <strong id="m-dist">0.000 mm</strong></div>
+              <div class="res-row"><span>&Delta;X:</span> <span id="m-dx">0.000 mm</span></div>
+              <div class="res-row"><span>&Delta;Y:</span> <span id="m-dy">0.000 mm</span></div>
+              <div class="res-row"><span>&Delta;Z:</span> <span id="m-dz">0.000 mm</span></div>
+            </div>
+            <div id="meas-angle-block" class="hidden">
+              <div class="res-row"><span>Enclosed Angle (&theta;):</span> <strong id="m-angle">0.00&deg;</strong></div>
+              <div class="res-row"><span>Vertex Point B:</span> <span id="m-angle-pt">--</span></div>
+            </div>
           </div>
           <button id="btn-clear-measure" class="btn full-btn">Reset Points</button>
+        </div>
+      </div>
+
+      <!-- 3D Engineering Markup & Review Panel -->
+      <div id="markup-panel" class="floating-panel hidden">
+        <div class="panel-header">
+          <span>3D ENGINEERING REVIEW & MARKUPS</span>
+          <button id="btn-close-markup" class="close-btn">&times;</button>
+        </div>
+        <div class="panel-body">
+          <p class="instruction-text">Click on any 3D model surface to drop an inspection pin.</p>
+          <div class="markup-input-row">
+            <input type="text" id="markup-text-input" placeholder="Enter engineering comment / note..." class="text-input">
+            <button id="btn-add-pin-prompt" class="mini-btn primary-mini">Drop Pin</button>
+          </div>
+          <div id="markup-pins-list" class="pins-list">
+            <!-- Dynamic pins list -->
+          </div>
+          <button id="btn-export-markups" class="btn full-btn mt-2">Export Review Report (.json)</button>
         </div>
       </div>
 
@@ -435,6 +497,8 @@ class CADNativeEditorProvider implements vscode.CustomReadonlyEditorProvider {
           <div><kbd>Scroll Wheel</kbd> Zoom In / Out</div>
           <div><kbd>Double Click</kbd> Focus on Part</div>
           <div><kbd>H</kbd> Fit to Screen</div>
+          <div><kbd>M</kbd> Toggle Caliper</div>
+          <div><kbd>E</kbd> Toggle Explode</div>
         </div>
       </div>
     </aside>

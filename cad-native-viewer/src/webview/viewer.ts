@@ -39,6 +39,15 @@ interface CADMeshEntry {
   visible: boolean;
   triangleCount: number;
   vertexCount: number;
+  initialPosition: THREE.Vector3;
+  explodeVector: THREE.Vector3;
+}
+
+interface MarkupPin {
+  id: number;
+  note: string;
+  position: THREE.Vector3;
+  markerMesh: THREE.Mesh;
 }
 
 class CADNativeViewerApp {
@@ -50,8 +59,16 @@ class CADNativeViewerApp {
   private rootGroup: THREE.Group;
   private gridHelper: THREE.GridHelper;
 
+  // ViewCube
+  private viewCubeCanvas: HTMLCanvasElement;
+  private viewCubeRenderer: THREE.WebGLRenderer;
+  private viewCubeScene: THREE.Scene;
+  private viewCubeCamera: THREE.PerspectiveCamera;
+  private viewCubeMesh: THREE.Mesh;
+
   private meshEntries: CADMeshEntry[] = [];
   private currentShadingMode: 'shaded' | 'edges' | 'wire' | 'xray' = 'shaded';
+  private currentTheme: 'dark' | 'light' | 'blueprint' = 'dark';
 
   // Clipping planes for dynamic section slicing
   private clipPlanes = {
@@ -64,10 +81,23 @@ class CADNativeViewerApp {
   private modelCenter = new THREE.Vector3();
   private modelSize = new THREE.Vector3();
 
-  // Measurement tool state
+  // Exploded View
+  private explodeFactor: number = 0;
+  private isExplodeAnimating: boolean = false;
+  private explodeAnimDirection: number = 1;
+
+  // Metrology Caliper
   private measureActive: boolean = false;
+  private measureMode: 'distance' | 'angle' = 'distance';
   private measurePoints: THREE.Vector3[] = [];
   private measureGroup: THREE.Group;
+
+  // 3D Markups & Redlines
+  private markupActive: boolean = false;
+  private markupPins: MarkupPin[] = [];
+  private markupGroup: THREE.Group;
+  private nextPinId: number = 1;
+
   private raycaster = new THREE.Raycaster();
   private mouse = new THREE.Vector2();
 
@@ -76,9 +106,10 @@ class CADNativeViewerApp {
 
   constructor() {
     this.canvas = document.getElementById('cad-canvas') as HTMLCanvasElement;
+    this.viewCubeCanvas = document.getElementById('viewcube-canvas') as HTMLCanvasElement;
     this.wasmUri = document.body.dataset.wasmUri || 'occt-import-js.wasm';
 
-    // 1. Initialize Scene & Renderer
+    // 1. Initialize Main Scene & Renderer
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x0f172a);
 
@@ -94,7 +125,7 @@ class CADNativeViewerApp {
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.2;
 
-    // 2. Camera & Controls
+    // 2. Main Camera & Controls
     const container = document.getElementById('viewport-container')!;
     const width = container.clientWidth || window.innerWidth;
     const height = container.clientHeight || window.innerHeight;
@@ -113,6 +144,9 @@ class CADNativeViewerApp {
     this.measureGroup = new THREE.Group();
     this.scene.add(this.measureGroup);
 
+    this.markupGroup = new THREE.Group();
+    this.scene.add(this.markupGroup);
+
     this.setupLighting();
 
     // 4. Ground Reference Grid
@@ -120,15 +154,18 @@ class CADNativeViewerApp {
     this.gridHelper.position.y = -0.5;
     this.scene.add(this.gridHelper);
 
-    // 5. Setup Events & UI Listeners
+    // 5. Initialize 3D ViewCube
+    this.initViewCube();
+
+    // 6. Setup Events & UI Listeners
     this.setupUIListeners();
     this.setupResizeObserver();
-    this.setupMeasureEvents();
+    this.setupCanvasClicks();
 
-    // 6. Start Render Loop
+    // 7. Start Render Loop
     this.animate();
 
-    // 7. Tell extension we are ready to receive CAD model
+    // 8. Tell extension we are ready to receive CAD model
     vscode.postMessage({ type: 'ready' });
   }
 
@@ -149,10 +186,103 @@ class CADNativeViewerApp {
     this.scene.add(ambientLight);
   }
 
+  // --- Interactive 3D ViewCube ---
+  private initViewCube() {
+    this.viewCubeScene = new THREE.Scene();
+    this.viewCubeCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    this.viewCubeCamera.position.set(0, 0, 4);
+
+    this.viewCubeRenderer = new THREE.WebGLRenderer({
+      canvas: this.viewCubeCanvas,
+      alpha: true,
+      antialias: true
+    });
+    this.viewCubeRenderer.setSize(110, 110);
+    this.viewCubeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    const amb = new THREE.AmbientLight(0xffffff, 1.0);
+    this.viewCubeScene.add(amb);
+    const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+    dir.position.set(2, 4, 3);
+    this.viewCubeScene.add(dir);
+
+    // Create Canvas Texture for each face
+    const createFaceTexture = (text: string) => {
+      const c = document.createElement('canvas');
+      c.width = 128;
+      c.height = 128;
+      const ctx = c.getContext('2d')!;
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(0, 0, 128, 128);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(4, 4, 120, 120);
+      ctx.fillStyle = '#f0f6fc';
+      ctx.font = 'bold 30px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, 64, 64);
+      return new THREE.CanvasTexture(c);
+    };
+
+    const materials = [
+      new THREE.MeshStandardMaterial({ map: createFaceTexture('RIGHT'), roughness: 0.4 }),
+      new THREE.MeshStandardMaterial({ map: createFaceTexture('LEFT'), roughness: 0.4 }),
+      new THREE.MeshStandardMaterial({ map: createFaceTexture('TOP'), roughness: 0.4 }),
+      new THREE.MeshStandardMaterial({ map: createFaceTexture('BOTTOM'), roughness: 0.4 }),
+      new THREE.MeshStandardMaterial({ map: createFaceTexture('FRONT'), roughness: 0.4 }),
+      new THREE.MeshStandardMaterial({ map: createFaceTexture('BACK'), roughness: 0.4 })
+    ];
+
+    const geo = new THREE.BoxGeometry(1.6, 1.6, 1.6);
+    this.viewCubeMesh = new THREE.Mesh(geo, materials);
+    this.viewCubeScene.add(this.viewCubeMesh);
+
+    // Click handler for ViewCube
+    this.viewCubeCanvas.addEventListener('click', (event) => {
+      const rect = this.viewCubeCanvas.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      const ray = new THREE.Raycaster();
+      ray.setFromCamera(new THREE.Vector2(x, y), this.viewCubeCamera);
+      const hits = ray.intersectObject(this.viewCubeMesh);
+      if (hits.length > 0 && hits[0].face) {
+        const normal = hits[0].face.normal.clone();
+        normal.applyEuler(this.viewCubeMesh.rotation);
+        const dist = Math.max(this.modelSize.x, this.modelSize.y, this.modelSize.z) * 1.8;
+        this.camera.position.set(normal.x * dist, normal.y * dist, normal.z * dist);
+        this.controls.target.set(0, 0, 0);
+        this.controls.update();
+      }
+    });
+  }
+
   private animate = () => {
     requestAnimationFrame(this.animate);
+
+    // Animate exploded view if cycling
+    if (this.isExplodeAnimating) {
+      this.explodeFactor += 0.8 * this.explodeAnimDirection;
+      if (this.explodeFactor >= 100) {
+        this.explodeFactor = 100;
+        this.explodeAnimDirection = -1;
+      } else if (this.explodeFactor <= 0) {
+        this.explodeFactor = 0;
+        this.explodeAnimDirection = 1;
+      }
+      (document.getElementById('explode-slider') as HTMLInputElement).value = this.explodeFactor.toString();
+      document.getElementById('explode-val')!.textContent = `${Math.round(this.explodeFactor)}%`;
+      this.applyExplodedView(this.explodeFactor);
+    }
+
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
+
+    // Sync ViewCube orientation with main camera
+    if (this.viewCubeMesh) {
+      this.viewCubeMesh.quaternion.copy(this.camera.quaternion).invert();
+      this.viewCubeRenderer.render(this.viewCubeScene, this.viewCubeCamera);
+    }
   };
 
   private setupResizeObserver() {
@@ -175,7 +305,6 @@ class CADNativeViewerApp {
   public async loadCAD(msg: any) {
     const { fileName, extension, fileSize, fileData, companion } = msg;
 
-    // Update Header HUD
     document.getElementById('doc-filename')!.textContent = fileName;
     document.getElementById('doc-size-badge')!.textContent = `${(fileSize / 1024).toFixed(1)} KB`;
     document.getElementById('doc-format-badge')!.textContent = extension.toUpperCase().replace('.', '');
@@ -242,10 +371,8 @@ class CADNativeViewerApp {
       throw new Error(`OpenCASCADE failed to read ${ext} file.`);
     }
 
-    // Clear previous models
     this.clearModel();
 
-    // Iterate meshes returned by OpenCASCADE
     result.meshes.forEach((meshData: any, index: number) => {
       const geometry = new THREE.BufferGeometry();
       const posArray = new Float32Array(meshData.attributes.position.array);
@@ -284,7 +411,7 @@ class CADNativeViewerApp {
       // Sharp CAD Edge Outline
       const edgesGeo = new THREE.EdgesGeometry(geometry, 25);
       const edgesMat = new THREE.LineBasicMaterial({
-        color: 0x0f172a,
+        color: this.currentTheme === 'blueprint' ? 0x38bdf8 : 0x0f172a,
         linewidth: 1,
         clippingPlanes: this.activeClipPlanes
       });
@@ -305,7 +432,9 @@ class CADNativeViewerApp {
         color,
         visible: true,
         triangleCount: Math.round(triangleCount),
-        vertexCount: posArray.length / 3
+        vertexCount: posArray.length / 3,
+        initialPosition: new THREE.Vector3(),
+        explodeVector: new THREE.Vector3()
       });
     });
   }
@@ -337,7 +466,7 @@ class CADNativeViewerApp {
 
               const edgesGeo = new THREE.EdgesGeometry(mesh.geometry, 25);
               const edgesMat = new THREE.LineBasicMaterial({
-                color: 0x0f172a,
+                color: this.currentTheme === 'blueprint' ? 0x38bdf8 : 0x0f172a,
                 clippingPlanes: this.activeClipPlanes
               });
               const edges = new THREE.LineSegments(edgesGeo, edgesMat);
@@ -356,7 +485,9 @@ class CADNativeViewerApp {
                 color,
                 visible: true,
                 triangleCount: Math.round(triCount),
-                vertexCount: posAttr.count
+                vertexCount: posAttr.count,
+                initialPosition: new THREE.Vector3(),
+                explodeVector: new THREE.Vector3()
               });
               idx++;
             }
@@ -407,7 +538,9 @@ class CADNativeViewerApp {
       color,
       visible: true,
       triangleCount: pos.count / 3,
-      vertexCount: pos.count
+      vertexCount: pos.count,
+      initialPosition: new THREE.Vector3(),
+      explodeVector: new THREE.Vector3()
     });
   }
 
@@ -447,7 +580,9 @@ class CADNativeViewerApp {
           color,
           visible: true,
           triangleCount: mesh.geometry.attributes.position.count / 3,
-          vertexCount: mesh.geometry.attributes.position.count
+          vertexCount: mesh.geometry.attributes.position.count,
+          initialPosition: new THREE.Vector3(),
+          explodeVector: new THREE.Vector3()
         });
         idx++;
       }
@@ -456,17 +591,14 @@ class CADNativeViewerApp {
     this.rootGroup.add(obj);
   }
 
-  // --- SolidWorks fallback when no companion is present ---
   private handleUnpairedSolidWorks(fileName: string, ext: string) {
     this.clearModel();
-    // Render a high-precision dimensional reference bounding block with SolidWorks styling
     const geometry = new THREE.CylinderGeometry(1500, 1500, 8000, 32);
     geometry.computeVertexNormals();
     const material = new THREE.MeshStandardMaterial({
       color: 0x38bdf8,
       roughness: 0.3,
       metalness: 0.8,
-      wireframe: false,
       transparent: true,
       opacity: 0.85
     });
@@ -481,7 +613,9 @@ class CADNativeViewerApp {
       color: new THREE.Color(0x38bdf8),
       visible: true,
       triangleCount: 128,
-      vertexCount: 192
+      vertexCount: 192,
+      initialPosition: new THREE.Vector3(),
+      explodeVector: new THREE.Vector3(0, 1, 0)
     });
 
     this.showCompanionBanner(
@@ -500,30 +634,39 @@ class CADNativeViewerApp {
 
   // --- Post-Load Calibration ---
   private onModelLoaded() {
-    // 1. Center model bounding box at origin
     this.modelBoundingBox.setFromObject(this.rootGroup);
     this.modelBoundingBox.getCenter(this.modelCenter);
     this.modelBoundingBox.getSize(this.modelSize);
 
-    // Offset rootGroup so centroid is at (0, 0, 0)
     this.rootGroup.position.sub(this.modelCenter);
 
-    // Recompute box after centering
     this.modelBoundingBox.setFromObject(this.rootGroup);
     this.modelBoundingBox.getSize(this.modelSize);
 
-    // Move grid right beneath model
+    // Compute explosion vectors for each mesh
+    const overallCenter = new THREE.Vector3(0, 0, 0);
+    this.meshEntries.forEach((entry, idx) => {
+      entry.initialPosition.copy(entry.mesh.position);
+      const partBox = new THREE.Box3().setFromObject(entry.mesh);
+      const partCenter = new THREE.Vector3();
+      partBox.getCenter(partCenter);
+
+      const vec = new THREE.Vector3().subVectors(partCenter, overallCenter);
+      if (vec.length() < 1) {
+        // Distribute radially along azimuth
+        const angle = (idx / Math.max(this.meshEntries.length, 1)) * Math.PI * 2;
+        vec.set(Math.cos(angle), (idx % 2 === 0 ? 0.5 : -0.5), Math.sin(angle));
+      }
+      vec.normalize();
+      entry.explodeVector.copy(vec);
+    });
+
     this.gridHelper.position.y = this.modelBoundingBox.min.y - 10;
     const maxDim = Math.max(this.modelSize.x, this.modelSize.y, this.modelSize.z);
     this.gridHelper.scale.set(maxDim / 1000, 1, maxDim / 1000);
 
-    // 2. Fit camera view
     this.fitCameraToModel();
-
-    // 3. Setup sliders for cross-section clipping
     this.setupSectionSliders();
-
-    // 4. Populate UI sidebar tree & properties
     this.populateComponentTree();
     this.populateEngineeringSpecs();
   }
@@ -540,6 +683,17 @@ class CADNativeViewerApp {
     this.controls.maxDistance = cameraZ * 10;
     this.controls.minDistance = maxDim * 0.05;
     this.controls.update();
+  }
+
+  // --- Exploded Assembly View Engine ---
+  private applyExplodedView(pct: number) {
+    const maxDim = Math.max(this.modelSize.x, this.modelSize.y, this.modelSize.z);
+    const scale = (pct / 100) * (maxDim * 0.8);
+
+    this.meshEntries.forEach((entry) => {
+      const offset = entry.explodeVector.clone().multiplyScalar(scale);
+      entry.mesh.position.copy(entry.initialPosition).add(offset);
+    });
   }
 
   // --- Dynamic Cross Section Slicing ---
@@ -592,11 +746,9 @@ class CADNativeViewerApp {
     });
   }
 
-  // --- Precision Measurement Caliper ---
-  private setupMeasureEvents() {
+  // --- Canvas Click Dispatcher (Measurement & Markups) ---
+  private setupCanvasClicks() {
     this.canvas.addEventListener('click', (event) => {
-      if (!this.measureActive) return;
-
       const rect = this.canvas.getBoundingClientRect();
       this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
@@ -607,53 +759,80 @@ class CADNativeViewerApp {
 
       if (intersects.length > 0) {
         const hitPoint = intersects[0].point;
-        this.addMeasurePoint(hitPoint);
+
+        if (this.markupActive) {
+          this.createMarkupPin(hitPoint);
+        } else if (this.measureActive) {
+          this.handleMeasureClick(hitPoint);
+        }
       }
     });
   }
 
-  private addMeasurePoint(pt: THREE.Vector3) {
-    if (this.measurePoints.length >= 2) {
-      this.clearMeasure();
-    }
+  // --- Precision Metrology (Distance & Angle) ---
+  private handleMeasureClick(pt: THREE.Vector3) {
+    if (this.measureMode === 'distance') {
+      if (this.measurePoints.length >= 2) this.clearMeasure();
+      this.measurePoints.push(pt.clone());
 
-    this.measurePoints.push(pt.clone());
-
-    // Add marker sphere
-    const markerGeo = new THREE.SphereGeometry(Math.max(this.modelSize.x * 0.01, 10), 16, 16);
-    const markerMat = new THREE.MeshBasicMaterial({
-      color: this.measurePoints.length === 1 ? 0xef4444 : 0x10b981
-    });
-    const marker = new THREE.Mesh(markerGeo, markerMat);
-    marker.position.copy(pt);
-    this.measureGroup.add(marker);
-
-    if (this.measurePoints.length === 2) {
-      const p1 = this.measurePoints[0];
-      const p2 = this.measurePoints[1];
-
-      // Draw measurement line
-      const lineGeo = new THREE.BufferGeometry().setFromPoints([p1, p2]);
-      const lineMat = new THREE.LineDashedMaterial({
-        color: 0x38bdf8,
-        dashSize: 20,
-        gapSize: 10,
-        linewidth: 2
+      const markerGeo = new THREE.SphereGeometry(Math.max(this.modelSize.x * 0.01, 8), 16, 16);
+      const markerMat = new THREE.MeshBasicMaterial({
+        color: this.measurePoints.length === 1 ? 0xef4444 : 0x10b981
       });
-      const line = new THREE.Line(lineGeo, lineMat);
-      line.computeLineDistances();
-      this.measureGroup.add(line);
+      const marker = new THREE.Mesh(markerGeo, markerMat);
+      marker.position.copy(pt);
+      this.measureGroup.add(marker);
 
-      // Calculate readouts
-      const dist = p1.distanceTo(p2);
-      const dx = Math.abs(p2.x - p1.x);
-      const dy = Math.abs(p2.y - p1.y);
-      const dz = Math.abs(p2.z - p1.z);
+      if (this.measurePoints.length === 2) {
+        const p1 = this.measurePoints[0];
+        const p2 = this.measurePoints[1];
+        const lineGeo = new THREE.BufferGeometry().setFromPoints([p1, p2]);
+        const lineMat = new THREE.LineDashedMaterial({
+          color: 0x38bdf8,
+          dashSize: 20,
+          gapSize: 10,
+          linewidth: 2
+        });
+        const line = new THREE.Line(lineGeo, lineMat);
+        line.computeLineDistances();
+        this.measureGroup.add(line);
 
-      document.getElementById('m-dist')!.textContent = `${dist.toFixed(3)} mm`;
-      document.getElementById('m-dx')!.textContent = `${dx.toFixed(3)} mm`;
-      document.getElementById('m-dy')!.textContent = `${dy.toFixed(3)} mm`;
-      document.getElementById('m-dz')!.textContent = `${dz.toFixed(3)} mm`;
+        const dist = p1.distanceTo(p2);
+        const dx = Math.abs(p2.x - p1.x);
+        const dy = Math.abs(p2.y - p1.y);
+        const dz = Math.abs(p2.z - p1.z);
+
+        document.getElementById('m-dist')!.textContent = `${dist.toFixed(3)} mm`;
+        document.getElementById('m-dx')!.textContent = `${dx.toFixed(3)} mm`;
+        document.getElementById('m-dy')!.textContent = `${dy.toFixed(3)} mm`;
+        document.getElementById('m-dz')!.textContent = `${dz.toFixed(3)} mm`;
+      }
+    } else {
+      // 3-Point Angle Mode: A, B (vertex), C
+      if (this.measurePoints.length >= 3) this.clearMeasure();
+      this.measurePoints.push(pt.clone());
+
+      const colors = [0xef4444, 0xf59e0b, 0x10b981];
+      const markerGeo = new THREE.SphereGeometry(Math.max(this.modelSize.x * 0.01, 8), 16, 16);
+      const marker = new THREE.Mesh(markerGeo, new THREE.MeshBasicMaterial({ color: colors[this.measurePoints.length - 1] }));
+      marker.position.copy(pt);
+      this.measureGroup.add(marker);
+
+      if (this.measurePoints.length === 3) {
+        const [pA, pB, pC] = this.measurePoints; // pB is vertex
+        const vBA = new THREE.Vector3().subVectors(pA, pB).normalize();
+        const vBC = new THREE.Vector3().subVectors(pC, pB).normalize();
+
+        const lineGeo = new THREE.BufferGeometry().setFromPoints([pA, pB, pC]);
+        const line = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: 0xf59e0b, linewidth: 2 }));
+        this.measureGroup.add(line);
+
+        const dot = THREE.MathUtils.clamp(vBA.dot(vBC), -1, 1);
+        const angleDeg = THREE.MathUtils.radToDeg(Math.acos(dot));
+
+        document.getElementById('m-angle')!.textContent = `${angleDeg.toFixed(2)}°`;
+        document.getElementById('m-angle-pt')!.textContent = `(${pB.x.toFixed(1)}, ${pB.y.toFixed(1)}, ${pB.z.toFixed(1)})`;
+      }
     }
   }
 
@@ -668,6 +847,135 @@ class CADNativeViewerApp {
     document.getElementById('m-dx')!.textContent = '0.000 mm';
     document.getElementById('m-dy')!.textContent = '0.000 mm';
     document.getElementById('m-dz')!.textContent = '0.000 mm';
+    document.getElementById('m-angle')!.textContent = '0.00°';
+    document.getElementById('m-angle-pt')!.textContent = '--';
+  }
+
+  // --- 3D Engineering Annotations & Redlining ---
+  private createMarkupPin(pt: THREE.Vector3) {
+    const noteInput = document.getElementById('markup-text-input') as HTMLInputElement;
+    const noteText = noteInput.value.trim() || `Inspection Point #${this.nextPinId}`;
+    noteInput.value = '';
+
+    const id = this.nextPinId++;
+
+    // 3D Marker Mesh (Cone/Pin pointing to surface)
+    const pinGroup = new THREE.Group();
+    const sphereGeo = new THREE.SphereGeometry(Math.max(this.modelSize.x * 0.012, 10), 16, 16);
+    const sphereMat = new THREE.MeshStandardMaterial({
+      color: 0xf59e0b,
+      metalness: 0.8,
+      roughness: 0.2,
+      emissive: 0x78350f
+    });
+    const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+    sphere.position.set(0, Math.max(this.modelSize.x * 0.02, 15), 0);
+
+    const stemGeo = new THREE.CylinderGeometry(2, 0.5, Math.max(this.modelSize.x * 0.02, 15), 8);
+    const stemMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+    const stem = new THREE.Mesh(stemGeo, stemMat);
+    stem.position.set(0, Math.max(this.modelSize.x * 0.01, 7.5), 0);
+
+    pinGroup.add(sphere);
+    pinGroup.add(stem);
+    pinGroup.position.copy(pt);
+    this.markupGroup.add(pinGroup);
+
+    const pin: MarkupPin = {
+      id,
+      note: noteText,
+      position: pt.clone(),
+      markerMesh: sphere
+    };
+    this.markupPins.push(pin);
+
+    this.renderMarkupList();
+  }
+
+  private renderMarkupList() {
+    const list = document.getElementById('markup-pins-list')!;
+    list.innerHTML = '';
+
+    this.markupPins.forEach((pin) => {
+      const item = document.createElement('div');
+      item.className = 'pin-item';
+      item.innerHTML = `
+        <div>
+          <span class="pin-badge">${pin.id}</span>
+          <span>${pin.note}</span>
+        </div>
+        <button class="mini-btn text-btn">&rarr;</button>
+      `;
+
+      item.onclick = () => {
+        // Zoom and focus on pin position
+        this.controls.target.copy(pin.position);
+        const offset = new THREE.Vector3(200, 200, 200);
+        this.camera.position.copy(pin.position).add(offset);
+        this.controls.update();
+      };
+
+      list.appendChild(item);
+    });
+  }
+
+  private exportMarkupReport() {
+    const report = {
+      model: document.getElementById('doc-filename')!.textContent,
+      timestamp: new Date().toISOString(),
+      engineer: 'Sourish Senapati (Roll: 002310301035)',
+      institution: 'Jadavpur University',
+      pinCount: this.markupPins.length,
+      markups: this.markupPins.map((p) => ({
+        id: p.id,
+        note: p.note,
+        coordinates: {
+          x: p.position.x,
+          y: p.position.y,
+          z: p.position.z
+        }
+      }))
+    };
+
+    vscode.postMessage({
+      type: 'exportFile',
+      format: 'json',
+      filename: `cad_markup_review_${Date.now()}.json`,
+      data: JSON.stringify(report, null, 2)
+    });
+  }
+
+  // --- Themes ---
+  public setTheme(theme: 'dark' | 'light' | 'blueprint') {
+    this.currentTheme = theme;
+    document.body.className = `cad-body theme-${theme}`;
+
+    document.querySelectorAll('#btn-theme-dark, #btn-theme-light, #btn-theme-blueprint').forEach((b) => {
+      b.classList.remove('active');
+    });
+    document.getElementById(`btn-theme-${theme}`)?.classList.add('active');
+
+    if (theme === 'dark') {
+      this.scene.background = new THREE.Color(0x0f172a);
+      this.gridHelper.material = new THREE.LineBasicMaterial({ color: 0x334155 });
+      this.updateEdgeColors(0x0f172a);
+    } else if (theme === 'light') {
+      this.scene.background = new THREE.Color(0xe2e8f0);
+      this.gridHelper.material = new THREE.LineBasicMaterial({ color: 0x94a3b8 });
+      this.updateEdgeColors(0x334155);
+    } else if (theme === 'blueprint') {
+      this.scene.background = new THREE.Color(0x031b30);
+      this.gridHelper.material = new THREE.LineBasicMaterial({ color: 0x0284c7 });
+      this.updateEdgeColors(0x38bdf8);
+    }
+  }
+
+  private updateEdgeColors(colorHex: number) {
+    this.meshEntries.forEach((m) => {
+      if (m.edges) {
+        (m.edges.material as THREE.LineBasicMaterial).color.setHex(colorHex);
+      }
+    });
   }
 
   // --- Shading Modes ---
@@ -752,7 +1060,6 @@ class CADNativeViewerApp {
       item.appendChild(label);
       item.appendChild(actions);
 
-      // Focus on click
       item.onclick = () => {
         document.querySelectorAll('.tree-item').forEach((el) => el.classList.remove('selected'));
         item.classList.add('selected');
@@ -824,11 +1131,44 @@ class CADNativeViewerApp {
     };
     document.getElementById('btn-view-fit')!.onclick = () => this.fitCameraToModel();
 
-    // Shading Mode Buttons
+    // Shading Modes
     document.getElementById('btn-mode-shaded')!.onclick = () => this.setShadingMode('shaded');
     document.getElementById('btn-mode-edges')!.onclick = () => this.setShadingMode('edges');
     document.getElementById('btn-mode-wire')!.onclick = () => this.setShadingMode('wire');
     document.getElementById('btn-mode-xray')!.onclick = () => this.setShadingMode('xray');
+
+    // Theme Switching
+    document.getElementById('btn-theme-dark')!.onclick = () => this.setTheme('dark');
+    document.getElementById('btn-theme-light')!.onclick = () => this.setTheme('light');
+    document.getElementById('btn-theme-blueprint')!.onclick = () => this.setTheme('blueprint');
+
+    // Exploded View Panel
+    const expPanel = document.getElementById('explode-panel')!;
+    const btnToggleExp = document.getElementById('btn-toggle-explode')!;
+    btnToggleExp.onclick = () => {
+      expPanel.classList.toggle('hidden');
+      btnToggleExp.classList.toggle('active', !expPanel.classList.contains('hidden'));
+    };
+    document.getElementById('btn-close-explode')!.onclick = () => {
+      expPanel.classList.add('hidden');
+      btnToggleExp.classList.remove('active');
+    };
+    const expSlider = document.getElementById('explode-slider') as HTMLInputElement;
+    expSlider.oninput = () => {
+      this.explodeFactor = parseFloat(expSlider.value);
+      document.getElementById('explode-val')!.textContent = `${Math.round(this.explodeFactor)}%`;
+      this.applyExplodedView(this.explodeFactor);
+    };
+    document.getElementById('btn-animate-explode')!.onclick = () => {
+      this.isExplodeAnimating = !this.isExplodeAnimating;
+    };
+    document.getElementById('btn-reset-explode')!.onclick = () => {
+      this.isExplodeAnimating = false;
+      this.explodeFactor = 0;
+      expSlider.value = '0';
+      document.getElementById('explode-val')!.textContent = '0%';
+      this.applyExplodedView(0);
+    };
 
     // Section Panel Toggles
     const secPanel = document.getElementById('section-panel')!;
@@ -842,7 +1182,6 @@ class CADNativeViewerApp {
       btnToggleSec.classList.remove('active');
     };
 
-    // Section Sliders
     const bindSlice = (axis: 'x' | 'y' | 'z') => {
       const chk = document.getElementById(`slice-${axis}-enable`) as HTMLInputElement;
       const sld = document.getElementById(`slice-${axis}-slider`) as HTMLInputElement;
@@ -864,13 +1203,16 @@ class CADNativeViewerApp {
     bindSlice('y');
     bindSlice('z');
 
-    // Measure Panel Toggles
+    // Metrology Measure Panel
     const measPanel = document.getElementById('measurement-panel')!;
     const btnToggleMeas = document.getElementById('btn-toggle-measure')!;
     btnToggleMeas.onclick = () => {
       this.measureActive = !this.measureActive;
+      this.markupActive = false;
       measPanel.classList.toggle('hidden', !this.measureActive);
       btnToggleMeas.classList.toggle('active', this.measureActive);
+      document.getElementById('markup-panel')!.classList.add('hidden');
+      document.getElementById('btn-toggle-markup')!.classList.remove('active');
       if (!this.measureActive) this.clearMeasure();
     };
     document.getElementById('btn-close-measure')!.onclick = () => {
@@ -881,18 +1223,49 @@ class CADNativeViewerApp {
     };
     document.getElementById('btn-clear-measure')!.onclick = () => this.clearMeasure();
 
-    // Export Panel Toggles
-    const expPanel = document.getElementById('export-panel')!;
-    const btnToggleExp = document.getElementById('btn-export-menu')!;
-    btnToggleExp.onclick = () => expPanel.classList.toggle('hidden');
-    document.getElementById('btn-close-export')!.onclick = () => expPanel.classList.add('hidden');
+    document.querySelectorAll('input[name="measure-mode"]').forEach((el) => {
+      el.addEventListener('change', (e) => {
+        this.measureMode = (e.target as HTMLInputElement).value as any;
+        this.clearMeasure();
+        const isDist = this.measureMode === 'distance';
+        document.getElementById('meas-dist-block')!.classList.toggle('hidden', !isDist);
+        document.getElementById('meas-angle-block')!.classList.toggle('hidden', isDist);
+        document.getElementById('measure-instructions')!.textContent = isDist
+          ? 'Click two vertices/points on the 3D model to calculate 3D Euclidean distance.'
+          : 'Click 3 points: A, B (vertex), and C to compute the enclosed 3D angle.';
+      });
+    });
+
+    // 3D Markups & Review Panel
+    const markupPanel = document.getElementById('markup-panel')!;
+    const btnToggleMarkup = document.getElementById('btn-toggle-markup')!;
+    btnToggleMarkup.onclick = () => {
+      this.markupActive = !this.markupActive;
+      this.measureActive = false;
+      markupPanel.classList.toggle('hidden', !this.markupActive);
+      btnToggleMarkup.classList.toggle('active', this.markupActive);
+      document.getElementById('measurement-panel')!.classList.add('hidden');
+      document.getElementById('btn-toggle-measure')!.classList.remove('active');
+    };
+    document.getElementById('btn-close-markup')!.onclick = () => {
+      this.markupActive = false;
+      markupPanel.classList.add('hidden');
+      btnToggleMarkup.classList.remove('active');
+    };
+    document.getElementById('btn-export-markups')!.onclick = () => this.exportMarkupReport();
+
+    // Export Modal
+    const exportModal = document.getElementById('export-panel')!;
+    const btnToggleExpModal = document.getElementById('btn-export-menu')!;
+    btnToggleExpModal.onclick = () => exportModal.classList.toggle('hidden');
+    document.getElementById('btn-close-export')!.onclick = () => exportModal.classList.add('hidden');
 
     document.getElementById('btn-export-glb')!.onclick = () => this.exportGLB();
     document.getElementById('btn-export-stl')!.onclick = () => this.exportSTL();
     document.getElementById('btn-export-obj')!.onclick = () => this.exportOBJ();
     document.getElementById('btn-export-png')!.onclick = () => this.exportPNG();
 
-    // Tree Show All / Clear Isolate
+    // Component Tree Show All / Isolate
     document.getElementById('btn-show-all')!.onclick = () => {
       this.meshEntries.forEach((m) => {
         m.visible = true;
@@ -939,9 +1312,10 @@ class CADNativeViewerApp {
     // Keyboard Shortcuts
     window.addEventListener('keydown', (e) => {
       if (e.key === 'h' || e.key === 'H') this.fitCameraToModel();
+      if (e.key === 'm' || e.key === 'M') btnToggleMeas.click();
+      if (e.key === 'e' || e.key === 'E') btnToggleExp.click();
     });
 
-    // Companion Dismiss Button
     document.getElementById('companion-dismiss')!.onclick = () => {
       document.getElementById('companion-banner')!.classList.add('hidden');
     };
@@ -1023,7 +1397,6 @@ class CADNativeViewerApp {
 window.addEventListener('DOMContentLoaded', () => {
   const app = new CADNativeViewerApp();
 
-  // Listen for messages from VS Code extension host
   window.addEventListener('message', (event) => {
     const msg = event.data;
     if (msg.type === 'loadCAD') {

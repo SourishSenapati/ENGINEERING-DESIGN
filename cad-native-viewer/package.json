@@ -85,6 +85,10 @@
       {
         "command": "cadNativeViewer.exportGLB",
         "title": "CAD: Export 3D Model to GLB"
+      },
+      {
+        "command": "cadNativeViewer.exportAgentContext",
+        "title": "CAD: Export Machine-Readable Context for AI Agents (JSON & Projections)"
       }
     ]
   },

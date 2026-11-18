@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as cp from 'child_process';
 
 export function activate(context: vscode.ExtensionContext) {
   const provider = new CADNativeEditorProvider(context);
@@ -27,6 +28,66 @@ export function activate(context: vscode.ExtensionContext) {
     }),
     vscode.commands.registerCommand('cadNativeViewer.resetView', () => {
       vscode.window.showInformationMessage('Use FIT button in CAD viewer ribbon to reset view.');
+    }),
+    vscode.commands.registerCommand('cadNativeViewer.exportAgentContext', async (uri?: vscode.Uri) => {
+      let targetFile = uri?.fsPath;
+      if (!targetFile) {
+        const uris = await vscode.window.showOpenDialog({
+          canSelectMany: false,
+          filters: {
+            'CAD Files': ['step', 'stp', 'glb', 'gltf', 'stl', 'obj', 'sldprt', 'sldasm']
+          },
+          openLabel: 'Select CAD Model for Agent Export'
+        });
+        if (uris && uris.length > 0) {
+          targetFile = uris[0].fsPath;
+        }
+      }
+      if (!targetFile) return;
+
+      const wsFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+      const scriptPath = wsFolder ? path.join(wsFolder, 'scripts', 'cad_agent_toolkit.py') : null;
+      if (!scriptPath || !fs.existsSync(scriptPath)) {
+        vscode.window.showErrorMessage('CAD Agent Toolkit script (scripts/cad_agent_toolkit.py) not found in workspace.');
+        return;
+      }
+
+      const outJson = `${targetFile}.agent_context.json`;
+      const outPng = `${targetFile}.multiview.png`;
+
+      vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: `CAD Agent: Extracting B-Rep topology & rendering 4-view projections for ${path.basename(targetFile)}...`,
+          cancellable: false
+        },
+        async () => {
+          return new Promise<void>((resolve, reject) => {
+            const pythonCmd = process.platform === 'win32' ? 'py' : 'python3';
+            
+            // 1. Inspect topology
+            cp.execFile(pythonCmd, [scriptPath, 'inspect', targetFile], (err, stdout, stderr) => {
+              if (err) {
+                vscode.window.showErrorMessage(`Topology extraction failed: ${stderr || err.message}`);
+                reject(err);
+                return;
+              }
+              fs.writeFileSync(outJson, stdout, 'utf-8');
+
+              // 2. Render multi-view
+              cp.execFile(pythonCmd, [scriptPath, 'render-multiview', targetFile, '--output', outPng], (renderErr) => {
+                if (renderErr) {
+                  vscode.window.showWarningMessage(`Multi-view projection render skipped: ${renderErr.message}`);
+                }
+                vscode.window.showInformationMessage(
+                  `Agent context exported: ${path.basename(outJson)} and ${path.basename(outPng)} are ready for LLM consumption.`
+                );
+                resolve();
+              });
+            });
+          });
+        }
+      );
     })
   );
 }

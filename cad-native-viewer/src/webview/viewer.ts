@@ -7,6 +7,11 @@ import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
 import { OBJExporter } from 'three/examples/jsm/exporters/OBJExporter.js';
 import occtimportjs from 'occt-import-js';
+import { CADPluginManager, CADViewerAPI, CADModelContext, CADViewerPlugin } from './plugin-system';
+import { createFEAStressPlugin } from './fea-stress-plugin';
+
+// Make THREE globally accessible for 3rd-party and proprietary plugins
+(window as any).THREE = THREE;
 
 // Acquire VS Code API
 declare function acquireVsCodeApi(): {
@@ -59,6 +64,9 @@ class CADNativeViewerApp {
   private rootGroup: THREE.Group;
   private gridHelper: THREE.GridHelper;
 
+  // 3rd Party & Proprietary Tool Plugin Manager
+  private pluginManager: CADPluginManager;
+
   // ViewCube
   private viewCubeCanvas: HTMLCanvasElement;
   private viewCubeRenderer: THREE.WebGLRenderer;
@@ -80,6 +88,9 @@ class CADNativeViewerApp {
   private modelBoundingBox = new THREE.Box3();
   private modelCenter = new THREE.Vector3();
   private modelSize = new THREE.Vector3();
+  private currentFileName: string = 'model';
+  private currentExtension: string = '';
+  private currentFileSize: number = 0;
 
   // Exploded View
   private explodeFactor: number = 0;
@@ -100,6 +111,7 @@ class CADNativeViewerApp {
 
   private raycaster = new THREE.Raycaster();
   private mouse = new THREE.Vector2();
+  private clock = new THREE.Clock();
 
   // WASM URI
   private wasmUri: string;
@@ -157,16 +169,133 @@ class CADNativeViewerApp {
     // 5. Initialize 3D ViewCube
     this.initViewCube();
 
-    // 6. Setup Events & UI Listeners
+    // 6. Initialize 3rd Party & Proprietary Tool SDK
+    this.initPluginSDK();
+
+    // 7. Setup Events & UI Listeners
     this.setupUIListeners();
     this.setupResizeObserver();
     this.setupCanvasClicks();
 
-    // 7. Start Render Loop
+    // 8. Start Render Loop
     this.animate();
 
-    // 8. Tell extension we are ready to receive CAD model
+    // 9. Tell extension we are ready to receive CAD model
     vscode.postMessage({ type: 'ready' });
+  }
+
+  private initPluginSDK() {
+    const api: CADViewerAPI = {
+      scene: this.scene,
+      camera: this.camera,
+      renderer: this.renderer,
+      rootGroup: this.rootGroup,
+      getModelContext: () => this.getModelContext(),
+      focusOnMesh: (mesh) => this.focusOnMesh(mesh),
+      fitCamera: () => this.fitCameraToModel(),
+      addMeshToScene: (obj) => this.rootGroup.add(obj),
+      removeMeshFromScene: (obj) => this.rootGroup.remove(obj),
+      setMeshColor: (meshId, hex) => {
+        const found = this.meshEntries.find(m => m.id === meshId);
+        if (found) {
+          (found.mesh.material as THREE.MeshStandardMaterial).color.setHex(hex);
+        }
+      },
+      applyVertexColors: (meshId, colorsRGB) => {
+        const found = this.meshEntries.find(m => m.id === meshId);
+        if (found) {
+          found.mesh.geometry.setAttribute('color', new THREE.BufferAttribute(colorsRGB, 3));
+          (found.mesh.material as THREE.MeshStandardMaterial).vertexColors = true;
+          found.mesh.material.needsUpdate = true;
+        }
+      },
+      resetMeshColors: () => {
+        this.meshEntries.forEach(m => {
+          (m.mesh.material as THREE.MeshStandardMaterial).color.copy(m.color);
+          if (m.mesh.geometry.attributes.color) {
+            m.mesh.geometry.deleteAttribute('color');
+          }
+          (m.mesh.material as THREE.MeshStandardMaterial).vertexColors = false;
+          m.mesh.material.needsUpdate = true;
+        });
+      },
+      addToolbarButton: (btnConfig) => {
+        const headerRight = document.querySelector('.header-right')!;
+        const btn = document.createElement('button');
+        btn.id = btnConfig.id;
+        btn.className = 'btn tool-btn';
+        if (btnConfig.tooltip) btn.title = btnConfig.tooltip;
+        btn.innerHTML = `${btnConfig.iconHtml ? `<span class="icon">${btnConfig.iconHtml}</span>` : ''} ${btnConfig.label}`;
+        btn.onclick = () => btnConfig.onClick(api);
+        headerRight.insertBefore(btn, document.getElementById('btn-export-menu'));
+      },
+      addFloatingPanel: (panelConfig) => {
+        const container = document.getElementById('viewport-container')!;
+        const panel = document.createElement('div');
+        panel.id = panelConfig.id;
+        panel.className = 'floating-panel hidden';
+        panel.style.right = '130px';
+        panel.style.top = '16px';
+        panel.style.maxWidth = '340px';
+
+        panel.innerHTML = `
+          <div class="panel-header">
+            <span>${panelConfig.title}</span>
+            <button class="close-btn">&times;</button>
+          </div>
+          <div class="panel-body"></div>
+        `;
+
+        panel.querySelector('.close-btn')!.addEventListener('click', () => {
+          panel.classList.add('hidden');
+        });
+
+        const body = panel.querySelector('.panel-body') as HTMLElement;
+        panelConfig.onRender(body, api);
+        container.appendChild(panel);
+      },
+      togglePanel: (panelId, force) => {
+        const panel = document.getElementById(panelId);
+        if (panel) {
+          if (force !== undefined) {
+            panel.classList.toggle('hidden', !force);
+          } else {
+            panel.classList.toggle('hidden');
+          }
+        }
+      },
+      postMessageToHost: (type, payload) => {
+        vscode.postMessage({ type, ...payload });
+      }
+    };
+
+    this.pluginManager = new CADPluginManager(api);
+
+    // Register built-in commercial-grade 3rd-party FEA plugin
+    this.pluginManager.registerPlugin(createFEAStressPlugin());
+
+    // Expose SDK globally so external scripts / iframe embeds can register plugins
+    (window as any).CADViewerSDK = this.pluginManager;
+  }
+
+  private getModelContext(): CADModelContext | null {
+    if (this.meshEntries.length === 0) return null;
+    return {
+      fileName: this.currentFileName,
+      extension: this.currentExtension,
+      fileSize: this.currentFileSize,
+      meshes: this.meshEntries.map(m => ({
+        id: m.id,
+        name: m.name,
+        mesh: m.mesh,
+        color: m.color,
+        triangleCount: m.triangleCount,
+        vertexCount: m.vertexCount
+      })),
+      boundingBox: this.modelBoundingBox.clone(),
+      size: this.modelSize.clone(),
+      center: this.modelCenter.clone()
+    };
   }
 
   private setupLighting() {
@@ -206,7 +335,6 @@ class CADNativeViewerApp {
     dir.position.set(2, 4, 3);
     this.viewCubeScene.add(dir);
 
-    // Create Canvas Texture for each face
     const createFaceTexture = (text: string) => {
       const c = document.createElement('canvas');
       c.width = 128;
@@ -238,7 +366,6 @@ class CADNativeViewerApp {
     this.viewCubeMesh = new THREE.Mesh(geo, materials);
     this.viewCubeScene.add(this.viewCubeMesh);
 
-    // Click handler for ViewCube
     this.viewCubeCanvas.addEventListener('click', (event) => {
       const rect = this.viewCubeCanvas.getBoundingClientRect();
       const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -259,6 +386,7 @@ class CADNativeViewerApp {
 
   private animate = () => {
     requestAnimationFrame(this.animate);
+    const delta = this.clock.getDelta();
 
     // Animate exploded view if cycling
     if (this.isExplodeAnimating) {
@@ -273,6 +401,11 @@ class CADNativeViewerApp {
       (document.getElementById('explode-slider') as HTMLInputElement).value = this.explodeFactor.toString();
       document.getElementById('explode-val')!.textContent = `${Math.round(this.explodeFactor)}%`;
       this.applyExplodedView(this.explodeFactor);
+    }
+
+    // Notify plugins of frame update
+    if (this.pluginManager) {
+      this.pluginManager.notifyFrame(delta);
     }
 
     this.controls.update();
@@ -305,6 +438,10 @@ class CADNativeViewerApp {
   public async loadCAD(msg: any) {
     const { fileName, extension, fileSize, fileData, companion } = msg;
 
+    this.currentFileName = fileName;
+    this.currentExtension = extension;
+    this.currentFileSize = fileSize;
+
     document.getElementById('doc-filename')!.textContent = fileName;
     document.getElementById('doc-size-badge')!.textContent = `${(fileSize / 1024).toFixed(1)} KB`;
     document.getElementById('doc-format-badge')!.textContent = extension.toUpperCase().replace('.', '');
@@ -312,7 +449,18 @@ class CADNativeViewerApp {
     this.showLoader(`PARSING ${extension.toUpperCase()}`, 'Loading CAD data stream...', 20);
 
     try {
-      if (['.step', '.stp', '.iges', '.igs', '.brep'].includes(extension.toLowerCase())) {
+      // 1. Check if a 3rd-party or proprietary parser is registered for this extension
+      const customParser = this.pluginManager.getFormatParser(extension);
+      if (customParser) {
+        this.showLoader('PROPRIETARY ADAPTER', `Executing 3rd-party parser for ${extension}...`, 50);
+        this.clearModel();
+        const customObj = await customParser(fileData, fileName, (window as any).CADViewerSDK['api']);
+        if (Array.isArray(customObj)) {
+          customObj.forEach(o => this.rootGroup.add(o));
+        } else if (customObj) {
+          this.rootGroup.add(customObj);
+        }
+      } else if (['.step', '.stp', '.iges', '.igs', '.brep'].includes(extension.toLowerCase())) {
         await this.loadWithOpenCascade(fileData, extension.toLowerCase(), fileName);
       } else if (['.glb', '.gltf'].includes(extension.toLowerCase())) {
         await this.loadGLTF(fileData);
@@ -643,7 +791,6 @@ class CADNativeViewerApp {
     this.modelBoundingBox.setFromObject(this.rootGroup);
     this.modelBoundingBox.getSize(this.modelSize);
 
-    // Compute explosion vectors for each mesh
     const overallCenter = new THREE.Vector3(0, 0, 0);
     this.meshEntries.forEach((entry, idx) => {
       entry.initialPosition.copy(entry.mesh.position);
@@ -653,7 +800,6 @@ class CADNativeViewerApp {
 
       const vec = new THREE.Vector3().subVectors(partCenter, overallCenter);
       if (vec.length() < 1) {
-        // Distribute radially along azimuth
         const angle = (idx / Math.max(this.meshEntries.length, 1)) * Math.PI * 2;
         vec.set(Math.cos(angle), (idx % 2 === 0 ? 0.5 : -0.5), Math.sin(angle));
       }
@@ -669,6 +815,12 @@ class CADNativeViewerApp {
     this.setupSectionSliders();
     this.populateComponentTree();
     this.populateEngineeringSpecs();
+
+    // Notify 3rd-party plugins that model is loaded
+    if (this.pluginManager) {
+      const ctx = this.getModelContext();
+      if (ctx) this.pluginManager.notifyModelLoaded(ctx);
+    }
   }
 
   private fitCameraToModel() {
@@ -746,7 +898,7 @@ class CADNativeViewerApp {
     });
   }
 
-  // --- Canvas Click Dispatcher (Measurement & Markups) ---
+  // --- Canvas Click Dispatcher ---
   private setupCanvasClicks() {
     this.canvas.addEventListener('click', (event) => {
       const rect = this.canvas.getBoundingClientRect();
@@ -764,6 +916,9 @@ class CADNativeViewerApp {
           this.createMarkupPin(hitPoint);
         } else if (this.measureActive) {
           this.handleMeasureClick(hitPoint);
+        } else {
+          // Notify 3rd-party plugins of selection
+          this.pluginManager.notifySelectionChanged(intersects[0].object as THREE.Mesh);
         }
       }
     });
@@ -808,7 +963,6 @@ class CADNativeViewerApp {
         document.getElementById('m-dz')!.textContent = `${dz.toFixed(3)} mm`;
       }
     } else {
-      // 3-Point Angle Mode: A, B (vertex), C
       if (this.measurePoints.length >= 3) this.clearMeasure();
       this.measurePoints.push(pt.clone());
 
@@ -819,7 +973,7 @@ class CADNativeViewerApp {
       this.measureGroup.add(marker);
 
       if (this.measurePoints.length === 3) {
-        const [pA, pB, pC] = this.measurePoints; // pB is vertex
+        const [pA, pB, pC] = this.measurePoints;
         const vBA = new THREE.Vector3().subVectors(pA, pB).normalize();
         const vBC = new THREE.Vector3().subVectors(pC, pB).normalize();
 
@@ -859,7 +1013,6 @@ class CADNativeViewerApp {
 
     const id = this.nextPinId++;
 
-    // 3D Marker Mesh (Cone/Pin pointing to surface)
     const pinGroup = new THREE.Group();
     const sphereGeo = new THREE.SphereGeometry(Math.max(this.modelSize.x * 0.012, 10), 16, 16);
     const sphereMat = new THREE.MeshStandardMaterial({
@@ -908,7 +1061,6 @@ class CADNativeViewerApp {
       `;
 
       item.onclick = () => {
-        // Zoom and focus on pin position
         this.controls.target.copy(pin.position);
         const offset = new THREE.Vector3(200, 200, 200);
         this.camera.position.copy(pin.position).add(offset);
@@ -1046,7 +1198,7 @@ class CADNativeViewerApp {
 
       const visBtn = document.createElement('button');
       visBtn.className = 'vis-btn';
-      visBtn.innerHTML = '&#128065;'; // eye
+      visBtn.innerHTML = '&#128065;';
       visBtn.title = 'Toggle Visibility';
       visBtn.onclick = (e) => {
         e.stopPropagation();
@@ -1104,7 +1256,6 @@ class CADNativeViewerApp {
 
   // --- UI Event Wireup ---
   private setupUIListeners() {
-    // View Presets
     document.getElementById('btn-view-iso')!.onclick = () => {
       const d = Math.max(this.modelSize.x, this.modelSize.y, this.modelSize.z) * 1.5;
       this.camera.position.set(d, d, d);
@@ -1131,18 +1282,15 @@ class CADNativeViewerApp {
     };
     document.getElementById('btn-view-fit')!.onclick = () => this.fitCameraToModel();
 
-    // Shading Modes
     document.getElementById('btn-mode-shaded')!.onclick = () => this.setShadingMode('shaded');
     document.getElementById('btn-mode-edges')!.onclick = () => this.setShadingMode('edges');
     document.getElementById('btn-mode-wire')!.onclick = () => this.setShadingMode('wire');
     document.getElementById('btn-mode-xray')!.onclick = () => this.setShadingMode('xray');
 
-    // Theme Switching
     document.getElementById('btn-theme-dark')!.onclick = () => this.setTheme('dark');
     document.getElementById('btn-theme-light')!.onclick = () => this.setTheme('light');
     document.getElementById('btn-theme-blueprint')!.onclick = () => this.setTheme('blueprint');
 
-    // Exploded View Panel
     const expPanel = document.getElementById('explode-panel')!;
     const btnToggleExp = document.getElementById('btn-toggle-explode')!;
     btnToggleExp.onclick = () => {
@@ -1170,7 +1318,6 @@ class CADNativeViewerApp {
       this.applyExplodedView(0);
     };
 
-    // Section Panel Toggles
     const secPanel = document.getElementById('section-panel')!;
     const btnToggleSec = document.getElementById('btn-toggle-section')!;
     btnToggleSec.onclick = () => {
@@ -1203,7 +1350,6 @@ class CADNativeViewerApp {
     bindSlice('y');
     bindSlice('z');
 
-    // Metrology Measure Panel
     const measPanel = document.getElementById('measurement-panel')!;
     const btnToggleMeas = document.getElementById('btn-toggle-measure')!;
     btnToggleMeas.onclick = () => {
@@ -1236,7 +1382,6 @@ class CADNativeViewerApp {
       });
     });
 
-    // 3D Markups & Review Panel
     const markupPanel = document.getElementById('markup-panel')!;
     const btnToggleMarkup = document.getElementById('btn-toggle-markup')!;
     btnToggleMarkup.onclick = () => {
@@ -1254,7 +1399,6 @@ class CADNativeViewerApp {
     };
     document.getElementById('btn-export-markups')!.onclick = () => this.exportMarkupReport();
 
-    // Export Modal
     const exportModal = document.getElementById('export-panel')!;
     const btnToggleExpModal = document.getElementById('btn-export-menu')!;
     btnToggleExpModal.onclick = () => exportModal.classList.toggle('hidden');
@@ -1265,7 +1409,6 @@ class CADNativeViewerApp {
     document.getElementById('btn-export-obj')!.onclick = () => this.exportOBJ();
     document.getElementById('btn-export-png')!.onclick = () => this.exportPNG();
 
-    // Component Tree Show All / Isolate
     document.getElementById('btn-show-all')!.onclick = () => {
       this.meshEntries.forEach((m) => {
         m.visible = true;
@@ -1279,7 +1422,6 @@ class CADNativeViewerApp {
       document.querySelectorAll('.tree-item').forEach((i) => i.classList.remove('selected'));
     };
 
-    // Toggle Left Tree Sidebar
     const leftSidebar = document.getElementById('sidebar-left')!;
     const btnToggleTree = document.getElementById('btn-toggle-tree')!;
     btnToggleTree.onclick = () => {
@@ -1287,7 +1429,6 @@ class CADNativeViewerApp {
       btnToggleTree.classList.toggle('active', !leftSidebar.classList.contains('hidden'));
     };
 
-    // Render Tuning Controls
     const expInput = document.getElementById('render-exposure') as HTMLInputElement;
     expInput.oninput = () => {
       this.renderer.toneMappingExposure = parseFloat(expInput.value);
@@ -1309,7 +1450,6 @@ class CADNativeViewerApp {
       });
     };
 
-    // Keyboard Shortcuts
     window.addEventListener('keydown', (e) => {
       if (e.key === 'h' || e.key === 'H') this.fitCameraToModel();
       if (e.key === 'm' || e.key === 'M') btnToggleMeas.click();
@@ -1321,7 +1461,6 @@ class CADNativeViewerApp {
     };
   }
 
-  // --- Export Actions ---
   private exportGLB() {
     const exporter = new GLTFExporter();
     exporter.parse(
@@ -1373,7 +1512,6 @@ class CADNativeViewerApp {
     a.click();
   }
 
-  // --- Helpers ---
   private showLoader(title: string, sub: string, pct: number) {
     const overlay = document.getElementById('loading-overlay')!;
     overlay.classList.remove('hidden');

@@ -1,0 +1,8 @@
+Tag,Description,Type,Design_Pressure_psig,Design_Temp_C,Dimensions,Material,Operating_Duty,Status
+R-201,Ethylene Oxide Reactor,Packed-Bed Tubular Reactor,450,290,"84.0 in ID x 30.0 ft L, 1021 Tubes",SA-516 Gr 70 / SA-213 TP304,17.26 MW Reaction Duty,Operational
+E-201,Dowtherm Coolant Cooler,Shell & Tube Heat Exchanger,200,290,"36.0 in ID x 16.0 ft L",Carbon Steel / Admiralty,17.50 MW Cooling Duty,Operational
+P-201A,Dowtherm Circulation Pump A,Centrifugal High Temp,250,290,"450 gpm @ 165 ft head",Cast Steel / 316 Trim,75 kW Motor,Running
+P-201B,Dowtherm Circulation Pump B,Centrifugal High Temp,250,290,"450 gpm @ 165 ft head",Cast Steel / 316 Trim,75 kW Motor,Standby
+V-201,Dowtherm Expansion Vessel,Vertical Pressure Drum,150,290,"48.0 in ID x 96.0 in H",SA-516 Gr 70,Volume = 1200 gal,Operational
+KO-201,Inlet Feed Knockout Drum,Vertical Demister Vessel,450,290,"36.0 in ID x 84.0 in H",SA-516 Gr 70,Liquid Separation,Operational
+F-201,Feed Gas Preheater,Fired / Steam Heater,450,290,"24.0 in ID x 12.0 ft L",SA-516 Gr 70 / TP304,Preheat to 260 C,Operational

@@ -1,0 +1,11 @@
+Tag,Loop_ID,Service,Measured_Variable,Range,Units,Signal_Type,Alarm_Low,Alarm_High,Trip_Point,Location
+FIT-201,LOOP-201,Ethylene Feed Gas Flow,Mass Flow,0 - 150000,lb/h,4-20 mA HART,20000,120000,135000,L-201-16"-HC-01
+PIT-201,LOOP-202,Reactor Inlet Pressure,Pressure,0 - 600,psig,4-20 mA HART,300,420,440,Top Channel Head N1
+PDIT-201,LOOP-203,Reactor Differential Pressure,Delta P,0 - 100,psi,4-20 mA HART,10,75,85,Between Top & Bottom Heads
+PIT-202,LOOP-204,Reactor Outlet Pressure,Pressure,0 - 500,psig,4-20 mA HART,250,380,400,Bottom Channel Head N2
+TIT-201A-J,LOOP-205,Axial Catalyst Bed Temp (10 pts),Temperature,0 - 400,deg C,Multipoint TC (K-Type),150,285,300,N7 Bed Thermowells
+TIT-202,LOOP-206,Coolant Inlet Temperature,Temperature,0 - 350,deg C,RTD Pt100 4-wire,220,270,280,L-203-10"-DT-03
+TIT-203,LOOP-207,Coolant Outlet Temperature,Temperature,0 - 350,deg C,RTD Pt100 4-wire,230,275,285,L-204-10"-DT-04
+FIT-202,LOOP-208,Dowtherm Coolant Circulation Flow,Volumetric Flow,0 - 800,gpm,4-20 mA HART,350,600,300 (Pump Trip),L-203-10"-DT-03
+LIT-201,LOOP-209,Dowtherm Expansion Drum Level,Liquid Level,0 - 100,%,4-20 mA Radar,20,80,15,V-201 Vessel
+AIT-201,LOOP-210,Reactor Effluent EO Gas Analyzer,Concentration,0 - 25,mol %,Modbus TCP,2.0,15.0,18.0,L-202-16"-HC-02

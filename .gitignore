@@ -47,3 +47,13 @@ desktop.ini
 
 # Sub-repositories
 VIRTUAL-PLANT/
+
+# Extension node modules
+node_modules/
+**/node_modules/
+
+# SolidWorks temporary lock files
+~$*.SLDPRT
+~$*.SLDASM
+~$*.sldprt
+~$*.sldasm

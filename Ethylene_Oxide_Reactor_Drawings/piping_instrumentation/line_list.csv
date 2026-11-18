@@ -1,0 +1,9 @@
+Line_Number,From_Equipment,To_Equipment,Nominal_Size_in,Schedule_Rating,Piping_Class,Fluid_Code,Operating_P_psig,Operating_T_C,Insulation
+L-201-16"-HC-01,KO-201 Knockout,R-201 Nozzle N1,16,Sch 40,300# RF,FG (Feed Gas),352.7,260,H (Thermal 75mm)
+L-202-16"-HC-02,R-201 Nozzle N2,Downstream Quench,16,Sch 40,300# RF,PG (Product Gas),293.9,260,H (Thermal 75mm)
+L-203-10"-DT-03,P-201A/B Discharge,R-201 Nozzle N3,10,Sch 40,300# RF,DW (Dowtherm A),140.0,250,H (Thermal 50mm)
+L-204-10"-DT-04,R-201 Nozzle N4,E-201 Cooler,10,Sch 40,300# RF,DW (Dowtherm A),130.0,262.5,H (Thermal 50mm)
+L-205-4"-PSV-05,R-201 Nozzle N5,Flare Header,4,Sch 80,300# RF,REL (Relief Gas),ATM,280,None
+L-206-4"-PSE-06,R-201 Nozzle N6,Atmospheric Vent,4,Sch 80,300# RF,VENT (Emergency),ATM,280,None
+L-207-3"-DR-07,R-201 Nozzle N8,Dowtherm Sump,3,Sch 40,300# RF,DRN (Drain),ATM,Ambient,None
+L-208-3"-VT-08,R-201 Nozzle N9,Atmospheric Vent,3,Sch 40,300# RF,VNT (Vent),ATM,Ambient,None

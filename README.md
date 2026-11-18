@@ -21,6 +21,8 @@ All drawings are designed in strict compliance with **ASME Boiler and Pressure V
   - [1. Packed-Bed Bromine Absorber – Mass Transfer and Process Safety Design](#1-packed-bed-bromine-absorber--mass-transfer-and-process-safety-design)
   - [2. Triple-Effect NaOH Evaporation Plant – Process Design and Equipment CAD](#2-triple-effect-naoh-evaporation-plant--process-design-and-equipment-cad)
   - [3. Ethanol–Water Recovery – Distillation Process Design and Equipment Sizing](#3-ethanolwater-recovery--distillation-process-design-and-equipment-sizing)
+  - [4. Acetaldehyde–Propylene Oxide Distillation – McCabe–Thiele Design & Blueprints](#4-acetaldehyde-propylene-oxide-distillation--mccabe-thiele-design--blueprints)
+  - [5. Ethylene Oxide Packed-Bed Tubular Reactor – Coupled Ergun Hydraulics & Kinetics](#5-ethylene-oxide-packed-bed-tubular-reactor--coupled-ergun-hydraulics--kinetics)
 - [Repository Structure](#repository-structure)
 - [Parametric CAD Engine & Generation](#parametric-cad-engine--generation)
   - [Prerequisites & Installation](#prerequisites--installation)
@@ -102,10 +104,79 @@ Selected a preliminary reflux ratio of $3.0$ and a column internal diameter of a
 
 ---
 
+### 4. Acetaldehyde–Propylene Oxide Distillation – McCabe–Thiele Design & Blueprints
+
+- **Duration**: 17 Nov, 2026
+- **Team Size**: 1
+- **Key Skills / Technologies**: Separation Processes, Binary Distillation, Vapour-Liquid Equilibrium (VLE), McCabe–Thiele Graphical Method, Tangent Pinch Analysis, Minimum Reflux Ratio, Column Hydraulics, Sieve Tray Design, PFD, P&ID (ISA-5.1), Heat Exchangers (TEMA BEM/AEL), ASME Section VIII Div 1
+- **Repository Location**: [`Acetaldehyde_PropyleneOxide_Distillation_Drawings/`](Acetaldehyde_PropyleneOxide_Distillation_Drawings/)
+
+#### Description
+Engineered a complete industrial-grade binary distillation column design separating an equimolar mass feed of $12,000\ \text{kg/h}$ ($50\ \text{wt}\%\ \text{Acetaldehyde}$, $50\ \text{wt}\%\ \text{Propylene Oxide}$, $60\%\ \text{vapour feed}$, $q = 0.40$) into a high-purity distillate containing $97\ \text{wt}\%\ \text{Acetaldehyde}$ ($6,000\ \text{kg/h}$) and a stripped bottoms stream containing $97\ \text{wt}\%\ \text{Propylene Oxide}$ ($6,000\ \text{kg/h}$, $3\ \text{wt}\%\ \text{Acetaldehyde}$).
+
+Conducted rigorous material balances ($100.000\%$ closure), VLE equilibrium curve and tangent pinch analysis ($(x_P, y_P) = (0.49152, 0.62013)$), minimum reflux evaluation ($R_{\min} = 2.7754$), and operating lines determination at $R = 1.4 R_{\min} = 3.8855$ ($m_R = 0.79531$, $m_S = 1.20176$). Stepped all 25 theoretical stages (12 rectifying trays, feed stage at Stage 13, 12 stripping trays + 1 partial reboiler). Sized a $2.00\ \text{m}$ internal-diameter column with 24 actual sieve trays, thermosiphon reboiler ($Q_R = 3,912.45\ \text{kW}$), and overhead total condenser ($Q_C = 4,733.92\ \text{kW}$).
+
+#### Drawing Catalog
+- **DWG 01**: Process Flow Diagram (PFD) & Heat-Mass Balances (T-301, P-301, E-301, C-301, E-302, E-303, V-301, P-302, E-304, E-305 with 10 stream tables, 100.000% mass balance closure)
+- **DWG 02**: VLE Analysis & McCabe-Thiele Theoretical Stages (Tangent pinch point, $R=3.8855$ ROL, $q=0.40$ feed line, 24 trays + reboiler = 25 theoretical stages, composition profiles)
+- **DWG 03**: Distillation Column General Arrangement & Elevation (Dual-view sectional elevation and exterior elevation with platform cages and ASME B16.5 Class 150 RF nozzle schedule)
+- **DWG 04**: Sieve Tray Hydraulic Design & Internal Assembly (Top plan view, crossflow froth section, $5\ \text{mm}$ hole on $15.0\ \text{mm}$ triangular pitch, $10.1\%$ hole area, $71.5\%$ flooding check)
+- **DWG 05**: Piping & Instrumentation Diagram (P&ID) with ISA-5.1 Loops (Split-range pressure, Tray 18 sensitive temp cascade, column DP flooding interlock, sump level, safety relief)
+- **DWG 06**: Reboiler & Condenser Details & 3D Isometric Assembly (Vertical thermosiphon reboiler TEMA BEM, condenser TEMA AEL, 3D spatial isometric plant assembly)
+
+### 5. Ethylene Oxide Packed-Bed Tubular Reactor – Coupled Ergun Hydraulics & Kinetics
+
+- **Duration**: Nov, 2026
+- **Team Size**: 1
+- **Author**: Sourish Senapati (Exam Roll No: `002310301035`)
+- **Key Skills / Technologies**: Chemical Reaction Engineering, Heterogeneous Catalysis, Ergun Equation Coupled ODE Modeling, Packed-Bed Tubular Reactor (PBR) Design, Runge-Kutta Numerical Integration, Thermal Utilities (Dowtherm A), ASME Section VIII Div 1, ISA-5.1 Instrumentation, SolidWorks 2025 SP1.2, STEP AP214, WebGL Three.js PBR, AutoCAD / ezdxf A1 CAD
+- **Repository Location**: [`Ethylene_Oxide_Reactor_Drawings/`](Ethylene_Oxide_Reactor_Drawings/)
+
+#### Description
+Rigorous chemical reaction engineering design, hydraulic modeling, native SolidWorks 2025 3D CAD modeling, and plant integration for a multi-tubular fixed-bed catalytic reactor (R-201) converting ethylene to ethylene oxide over an $\text{Ag}/\alpha\text{-Al}_2\text{O}_3$ catalyst ($D_p = 1/2\text{ in}$, $\rho_c = 140\text{ lb/ft}^3$, $\phi = 0.50$) at $260^\circ\text{C}$ and $25\text{ atm}$ inlet pressure.
+
+Solved the non-linear coupled differential system for reaction conversion $dX/dW$ and Ergun momentum loss $dy/dW$ ($y = P/P_0$) with non-equimolar expansion ($\epsilon = -0.14286$). Determined exact catalyst mass $W = 26,469.02\text{ lb cat}$ ($12,006.16\text{ kg}$, an $8.52\%$ penalty over the zero-$\Delta P$ ideal baseline of $24,390.55\text{ lb}$), exit pressure $P_{\text{exit}} = 20.998\text{ atm}$ ($\Delta P = 4.002\text{ atm} = 58.81\text{ psi}$), and net volumetric expansion $v/v_0 = 1.1202$. Sized $1,021$ Schedule 80 tubes ($1.5\text{-in}$ nominal, $D_i = 1.500\text{ in}$, $D_o = 1.900\text{ in}$) packed to $30.0\text{ ft}$ stock length inside an $84.0\text{-in}$ ($2.134\text{ m}$) ID pressure shell ($t_s = 1.125\text{ in}$ SA-516 Gr 70) cooled by circulating Dowtherm A ($420\text{ gpm}$).
+
+#### Drawing Catalog & Turnkey Deliverables
+- **DWG 01**: Equipment General Arrangement & Sectional Elevation CAD (`JU-CHE-PEDD-R201-DWG-01`)
+- **DWG 02**: Process Piping & Instrumentation Diagram (P&ID) with ISA-5.1 Loops (`JU-CHE-PEDD-R201-DWG-02`)
+- **DWG 03**: Mechanical Fabrication & ASME Section VIII Division 1 Code Details (`JU-CHE-PEDD-R201-DWG-03`)
+- **DWG 04**: Rigorous Reaction Kinetics & Hydraulic Performance Curves (`JU-CHE-PEDD-R201-DWG-04`)
+- **DWG 05**: 3D Isometric Plant Integration & Connected Piping Layout (`JU-CHE-PEDD-R201-DWG-05`)
+- **Native SolidWorks 2025 CAD**: 6x `.SLDPRT` parametric parts + master `.SLDASM` assembly under `cad/sldprt/` and `cad/sldasm/`.
+- **Standard STEP AP214 Exchange**: Master model `R201_Ethylene_Oxide_Reactor_Assembly.step` ($307\text{ KB}$, $4,138$ entities) + component STEPs under `cad/step/`.
+- **Interactive 3D WebGL Orbit Viewer**: Three.js dynamic Z-plane slicing and PBR inspector in `cad/viewer/index.html` + multi-material PBR GLB models under `cad/glb/`.
+- **Standard A1 Vector DXF Drawings**: Fully layered engineering drawings under `cad/dxf/`.
+- **10-Point Integration Audit**: 100% passed (zero disconnected lines, zero mock pipes) verified in `mechanical/plant_integration_audit_report.md`.
+
+---
+
 ## Repository Structure
 
 ```
-ENGINEERING-DESIGN/
+CAD_Engineering_Drawings/
+├── Ethylene_Oxide_Reactor_Drawings/      # Complete Turnkey Reactor Package (Toor Dal Standard)
+│   ├── README.md                        # Master engineering treatise & documentation index
+│   ├── 01..05 Drawings (PDF + PNG)      # Official 5-sheet vector drawing package
+│   ├── aspen/                           # Aspen Plus / HYSYS simulation reports & stream tables
+│   ├── cad/
+│   │   ├── dxf/                         # 2D Vector DXFs (Elevation, Tubesheet, P&ID)
+│   │   ├── glb/                         # PBR GLB 3D models (Full exterior & internal cutaway)
+│   │   ├── pdf/ & png/                  # Drawing prints and 300 DPI high-res renders
+│   │   ├── sldasm/                      # Native SolidWorks 2025 Master Assembly (.SLDASM)
+│   │   ├── sldprt/                      # 6x Native SolidWorks Parametric Parts (.SLDPRT)
+│   │   ├── step/                        # Standard ISO 10303-21 STEP AP214 B-Rep models
+│   │   └── viewer/                      # Standalone Three.js 3D WebGL Orbit Viewer
+│   ├── mechanical/                      # ASME Section VIII Div 1 calculations & audit reports
+│   ├── piping_instrumentation/          # Master equipment, line lists, valves, instruments
+│   └── scripts/                         # SolidWorks COM, PBR GLB, DXF & audit generators
+├── Acetaldehyde_PropyleneOxide_Distillation_Drawings/ # Acetaldehyde-PO Distillation package (PDF + PNG)
+│   ├── 01_Acetaldehyde_Distillation_Process_Flow_Diagram_PFD.pdf / .png
+│   ├── 02_Acetaldehyde_VLE_McCabe_Thiele_Distillation_CAD.pdf / .png
+│   ├── 03_Acetaldehyde_Column_General_Arrangement_Elevation_CAD.pdf / .png
+│   ├── 04_Acetaldehyde_Sieve_Tray_Assembly_Hydraulic_Details_CAD.pdf / .png
+│   ├── 05_Acetaldehyde_Column_PID_Instrumentation_CAD.pdf / .png
+│   └── 06_Acetaldehyde_Distillation_Reboiler_Condenser_3D_Isometric_CAD.pdf / .png
 ├── Ethanol_Water_Distillation_Drawings/  # Ethanol-Water Distillation package (PDF + PNG)
 │   ├── 01_Ethanol_Distillation_Process_Flow_Diagram_PFD.pdf / .png
 │   ├── 02_Ethanol_VLE_McCabe_Thiele_Distillation_CAD.pdf / .png
@@ -127,17 +198,23 @@ ENGINEERING-DESIGN/
 │   ├── 03_Triple_Effect_Plant_GA_Structural_Elevation.pdf / .png
 │   ├── 04_Triple_Effect_Detailed_PID_CAD.pdf / .png
 │   └── 05_Triple_Effect_Mechanical_Fabrication_Details.pdf / .png
-├── scripts/                              # Parametric CAD generation & audit engines
+├── VIRTUAL-PLANT/                        # ROS2 / Gazebo Digital Twin & Refinery CAD Drawings
+├── scripts/                              # Parametric CAD generation & numerical ODE solvers
 │   ├── __init__.py
-│   ├── audit_drawings.py                # Automated ISO dimension & font compliance audit
-│   ├── cad_common.py                    # A1 plotting geometry primitives
-│   ├── cad_common_a4.py                 # A4 landscape plotting primitives & title blocks
+│   ├── cad_common.py                    # Universal CAD drafting primitives & ASME title blocks
+│   ├── cad_common_a4.py                 # A4 landscape plotting primitives
+│   ├── solve_ethylene_oxide_reactor.py  # Coupled Ergun ODE numerical solver (RK-45)
+│   ├── parametric_study_nt.py           # Schedule 80 tube count parametric study
+│   ├── generate_reactor_dwg01.py to 05.py # Ethylene Oxide Reactor blueprint generators
+│   ├── generate_acetaldehyde_dwg01.py to 06.py # Acetaldehyde Distillation blueprint generators
+│   ├── generate_ethanol_dwg01.py to 06.py # Ethanol Distillation blueprint generators
 │   ├── generate_a4_dwg01.py to 06.py    # Absorber A4 blueprint generators
-│   ├── generate_dwg01.py to 05.py       # Absorber A1 blueprint generators
-│   └── generate_ethanol_dwg01.py to 06.py # Ethanol Distillation blueprint generators
+│   └── generate_dwg01.py to 05.py       # Absorber A1 blueprint generators
+├── build_all_ethylene_oxide_drawings.py  # Master build & deploy script for Reactor blueprints
 ├── build_all_absorber_drawings.py        # Master build script for Absorber blueprints
 ├── build_all_distillation_drawings.py    # Master build script for Distillation blueprints
-├── requirements.txt                      # Python dependencies (matplotlib, numpy, PyMuPDF)
+├── build_all_acetaldehyde_drawings.py    # Master build script for Acetaldehyde blueprints
+├── requirements.txt                      # Python dependencies (matplotlib, numpy, scipy, PyMuPDF)
 ├── LICENSE                               # Educational & Academic License (CC BY-NC 4.0)
 └── README.md                             # Documentation & engineering basis
 ```
@@ -159,6 +236,16 @@ py -m pip install -r requirements.txt
 
 ### Building Blueprint Packages
 
+- **Build Ethylene Oxide Reactor Blueprints (5 Sheets)**:
+  ```bash
+  py build_all_ethylene_oxide_drawings.py
+  ```
+
+- **Build Acetaldehyde–Propylene Oxide Distillation Blueprints (6 Sheets)**:
+  ```bash
+  py build_all_acetaldehyde_drawings.py
+  ```
+
 - **Build Ethanol Distillation Blueprints (6 Sheets)**:
   ```bash
   py build_all_distillation_drawings.py
@@ -170,7 +257,7 @@ py -m pip install -r requirements.txt
   ```
 
 ### Automated Compliance Auditing
-Run the verification test suite to check all 12 A4 drawings across both equipment packages:
+Run the verification test suite to check all 18 A4 drawings across all three equipment packages:
 ```bash
 py scripts/audit_drawings.py
 ```
@@ -179,6 +266,41 @@ Checks verified:
 - Title block metadata accuracy (`SOURISH SENAPATI`, `ROLL NO. 002310301035`)
 - Absence of Unicode character substitution glitches (`U+FFFD`)
 - Absence of unparsed raw LaTeX formatting leaks
+
+---
+
+## 🛠️ Universal CAD Native 3D Viewer (`cad-native-viewer`)
+
+This repository includes **`cad-native-viewer`**, a high-precision VS Code, Cursor, Windsurf, VSCodium, and WSL extension that allows direct, native 3D viewing of CAD files just like PDFs and Markdown previews:
+
+- **Supported CAD Formats**: `.step`, `.stp`, `.sldprt`, `.sldasm`, `.iges`, `.igs`, `.brep`, `.glb`, `.gltf`, `.stl`, `.obj`.
+- **Pure WebAssembly Engine**: Powered by OpenCASCADE WebAssembly (`occt-import-js`), requiring **zero** external software or C++ compilers. Operates 100% offline on Windows, Linux, and macOS.
+- **Interactive Toolset**:
+  - Full 3D Orbit, Pan, Zoom, and Fit-to-Screen controls.
+  - Dynamic 3-Axis Cross-Section Slicing (X, Y, Z sliders with normal flipping).
+  - Precision Measurement Caliper (3D Euclidean distance $D = \sqrt{\Delta X^2 + \Delta Y^2 + \Delta Z^2}$).
+  - Shading Presets: PBR Metallic Shaded, Sharp CAD Edges, Technical Wireframe, and Ghosted X-Ray.
+  - Multi-body Component Tree with part visibility toggles and focus.
+  - Direct export to binary GLB, STL, OBJ, and Ultra-HD PNG snapshots.
+- **Package Location**: [`cad-native-viewer/`](cad-native-viewer/)
+
+To install locally:
+```bash
+code --install-extension cad-native-viewer/cad-native-viewer-1.0.0.vsix
+```
+
+---
+
+## 🌐 Virtual Plant Twin & Game-Engine Plant Simulator
+
+For the full interactive 3D WebGL plant simulation environment, real-time chemical process telemetry, ROS 2 automation nodes, and Gazebo ODE physical twins, visit the companion repository:
+
+👉 **[SourishSenapati/VIRTUAL-PLANT](https://github.com/SourishSenapati/VIRTUAL-PLANT)**
+
+Features in `VIRTUAL-PLANT`:
+- **React 19 + Three.js Industrial Plant Simulator**: First-person and orbit camera walkthroughs, animated catalyst tube cutaways, and procedural acoustic sound synthesis.
+- **Gazebo ODE Physics World**: Multi-body rigid-body dynamics for a 100,000 BPD petroleum refinery and chemical processing complex.
+- **ROS 2 Humble / Iron Middleware**: Real-time mass balance controllers, dynamic cut-point optimizers, and Safety Instrumented Systems (SIS).
 
 ---
 

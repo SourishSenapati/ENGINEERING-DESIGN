@@ -1,0 +1,106 @@
+{
+  "name": "cad-native-viewer",
+  "displayName": "CAD Native 3D Viewer (STEP, SLDPRT, SLDASM, IGES, GLB)",
+  "description": "Universal native 3D CAD viewer for VS Code, Cursor, Windsurf, and WSL. View and interact with STEP, SLDPRT, SLDASM, IGES, STL, and GLB files natively like PDFs.",
+  "version": "1.0.0",
+  "publisher": "sourish-senapati",
+  "author": {
+    "name": "Sourish Senapati (Roll: 002310301035)",
+    "email": "sourish.senapati@jadavpuruniversity.in"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sourish-senapati/cad-native-viewer.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Visualization",
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "cad",
+    "step",
+    "stp",
+    "sldprt",
+    "sldasm",
+    "solidworks",
+    "iges",
+    "3d",
+    "viewer",
+    "cursor",
+    "wsl",
+    "plant-engineering"
+  ],
+  "activationEvents": [
+    "onCustomEditor:cad.nativeViewer"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "cad.nativeViewer",
+        "displayName": "CAD Native 3D Viewer",
+        "selector": [
+          { "filenamePattern": "*.step" },
+          { "filenamePattern": "*.STEP" },
+          { "filenamePattern": "*.stp" },
+          { "filenamePattern": "*.STP" },
+          { "filenamePattern": "*.sldprt" },
+          { "filenamePattern": "*.SLDPRT" },
+          { "filenamePattern": "*.sldasm" },
+          { "filenamePattern": "*.SLDASM" },
+          { "filenamePattern": "*.iges" },
+          { "filenamePattern": "*.IGES" },
+          { "filenamePattern": "*.igs" },
+          { "filenamePattern": "*.IGS" },
+          { "filenamePattern": "*.glb" },
+          { "filenamePattern": "*.GLB" },
+          { "filenamePattern": "*.gltf" },
+          { "filenamePattern": "*.GLTF" },
+          { "filenamePattern": "*.stl" },
+          { "filenamePattern": "*.STL" },
+          { "filenamePattern": "*.obj" },
+          { "filenamePattern": "*.OBJ" }
+        ],
+        "priority": "default"
+      }
+    ],
+    "commands": [
+      {
+        "command": "cadNativeViewer.openWithCADViewer",
+        "title": "CAD: Open in Native 3D Viewer"
+      },
+      {
+        "command": "cadNativeViewer.resetView",
+        "title": "CAD: Reset Camera View"
+      },
+      {
+        "command": "cadNativeViewer.toggleSection",
+        "title": "CAD: Toggle Section Slicing"
+      },
+      {
+        "command": "cadNativeViewer.exportGLB",
+        "title": "CAD: Export 3D Model to GLB"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node esbuild.config.js --production",
+    "watch": "node esbuild.config.js --watch",
+    "package": "vsce package --no-dependencies"
+  },
+  "dependencies": {
+    "occt-import-js": "^0.0.23",
+    "three": "^0.182.0"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.75.0",
+    "@vscode/vsce": "^3.2.1",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "timestamp": "2026-11-18T18:27:58+0530",
+  "lead_engineer": "Sourish Senapati (Roll: 002310301035)",
+  "department": "Chemical Engineering, Jadavpur University",
+  "tests": {
+    "TEST_1_EQUIPMENT_REGISTERS": {
+      "description": "Validation of equipment master data and tag uniqueness",
+      "equipment_count": 7,
+      "tags": [
+        "E-201",
+        "P-201B",
+        "V-201",
+        "F-201",
+        "R-201",
+        "KO-201",
+        "P-201A"
+      ],
+      "status": "PASSED"
+    },
+    "TEST_2_MASS_HEAT_BALANCE": {
+      "description": "Reactor conservation of mass and reaction heat duty closure",
+      "inlet_mass_lb_h": 313461.2,
+      "outlet_mass_lb_h": 313461.2,
+      "mass_closure_error_pct": 0.0,
+      "reaction_heat_duty_MW": 17.26,
+      "status": "PASSED"
+    },
+    "TEST_3_PIPE_CONNECTIVITY": {
+      "description": "Zero disconnected pipe lines audit (From/To equipment resolution)",
+      "total_lines_audited": 8,
+      "disconnected_lines": [],
+      "status": "PASSED"
+    },
+    "TEST_4_NOZZLE_PIPE_MATCHING": {
+      "description": "Reconciliation of line sizes with vessel nozzle schedules",
+      "mismatches": [],
+      "status": "PASSED"
+    },
+    "TEST_5_VALVE_SCHEDULE_RATINGS": {
+      "description": "Validation of valve flange ratings against ASME B16.5 Class 300",
+      "valve_count": 9,
+      "failures": [],
+      "status": "PASSED"
+    },
+    "TEST_6_INSTRUMENTATION_INDEX": {
+      "description": "Validation of control loops and transmitter channels to ISA-5.1",
+      "total_instruments": 10,
+      "missing_critical_tags": [],
+      "status": "PASSED"
+    },
+    "TEST_7_ASME_MECHANICAL_SAFETY": {
+      "description": "Validation of pressure vessel shell and tube safety factors",
+      "shell_thickness_nominal_in": 1.125,
+      "shell_thickness_required_in": 0.7607,
+      "shell_safety_margin": 1.4789010122255817,
+      "status": "PASSED"
+    },
+    "TEST_8_SOLIDWORKS_NATIVE_CAD": {
+      "description": "Validation of native SolidWorks .SLDPRT parts and .SLDASM master assembly",
+      "total_sldprt": 6,
+      "total_sldasm": 2,
+      "missing_parts": [],
+      "status": "PASSED"
+    },
+    "TEST_9_STEP_AP214_EXCHANGE": {
+      "description": "Validation of standard ISO 10303-21 STEP AP214 exchange CAD models",
+      "file_exists": true,
+      "file_size_bytes": 307593,
+      "total_step_lines": 4138,
+      "status": "PASSED"
+    },
+    "TEST_10_REACT19_WORKSTATION_AND_DXF": {
+      "description": "Validation of multi-material PBR GLBs, React 19 3D workstation, and 2D DXFs",
+      "glb_models": [
+        "R201_Ethylene_Oxide_Reactor_PBR.glb",
+        "R201_Reactor_Cutaway_Internal_PBR.glb"
+      ],
+      "dxf_drawings": [
+        "R201_Elevation_Cross_Section.dxf",
+        "R201_Piping_PID_Flowsheet.dxf",
+        "R201_Tubesheet_Drilling_Pattern.dxf"
+      ],
+      "react19_portal": true,
+      "status": "PASSED"
+    }
+  },
+  "summary": {
+    "total": 10,
+    "passed": 10,
+    "failed": 0,
+    "warnings": 0
+  }
+}

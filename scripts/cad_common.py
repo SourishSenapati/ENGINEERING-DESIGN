@@ -180,7 +180,8 @@ def draw_sheet_border(ax):
 
 def draw_title_block(ax, dwg_title, dwg_no, rev='00', sheet_no='01 OF 05', scale='1:25 METRIC / PROPORTIONED',
                      equip_desc='PACKED ABSORPTION COLUMN (C-101) — 750 MM ID x 4500 MM BED',
-                     duty_desc='0.25 M³/S GAS (2 MOL% Br2) | 90% RECOVERY | WATER: 17.25 KG/S'):
+                     duty_desc='0.25 M³/S GAS (2 MOL% Br2) | 90% RECOVERY | WATER: 17.25 KG/S',
+                     date='17 / 11 / 2026'):
     TB_X = 1.2
     TB_Y = 1.2
     TB_W = W - 2.4
@@ -217,7 +218,7 @@ def draw_title_block(ax, dwg_title, dwg_no, rev='00', sheet_no='01 OF 05', scale
     
     # Row 3: Student Details
     r3_h = ['STUDENT NAME', 'EXAM ROLL NUMBER', 'DRAWING / DOCUMENT NO.', 'DATE']
-    r3_v = ['SOURISH SENAPATI', '002310301035', f'{dwg_no}  (SHEET {sheet_no})', '29 / 09 / 2026']
+    r3_v = ['SOURISH SENAPATI', '002310301035', f'{dwg_no}  (SHEET {sheet_no})', date]
     for c_idx, (h_txt, v_txt) in enumerate(zip(r3_h, r3_v)):
         cx_pos = TB_X + TB_W * col_centers_4[c_idx]
         cad_text(ax, cx_pos, TB_Y + 2.45, h_txt, sz=6.5, bold=True)

@@ -1,0 +1,10 @@
+Valve_Tag,Line_Number,Size_in,Valve_Type,Rating,Body_Material,Trim,Actuator_Type,Failure_Position,Function
+FCV-201,L-201-16"-HC-01,16,Globe Control Valve,Class 300,WCB / CF8M,Stellite Facing,Pneumatic Diaphragm,Fail Closed (FC),Ethylene Feed Flow Control
+TCV-201,L-204-10"-DT-04,10,Globe Control Valve,Class 300,WCB,Stainless 316,Pneumatic Diaphragm,Fail Open (FO),Coolant Return Temperature Control
+PSV-201A,L-205-4"-PSV-05,4x6,Safety Relief Valve,Class 300x150,Carbon Steel,Stainless 316,Spring Loaded Pilot,Full Lift,Overpressure Protection (Set 450 psig)
+PSV-201B,L-205-4"-PSV-05,4x6,Safety Relief Valve,Class 300x150,Carbon Steel,Stainless 316,Spring Loaded Pilot,Full Lift,Standby Overpressure Protection (Set 450 psig)
+PSE-201,L-206-4"-PSE-06,4,Rupture Disk,Class 300,Inconel 625,Hastelloy Holder,Burst Membrane,Burst Open,Emergency Runaway Protection (Set 475 psig)
+XV-201,L-201-16"-HC-01,16,Ball Isolation Valve,Class 300,CF8M,PTFE Seat,Electro-Hydraulic,Fail Closed (FC),Emergency Feed Gas Shut-Off
+XV-202,L-202-16"-HC-02,16,Ball Isolation Valve,Class 300,CF8M,Metal Seat,Electro-Hydraulic,Fail Closed (FC),Emergency Reactor Isolation
+V-DRN-01,L-207-3"-DR-07,3,Gate Valve,Class 300,WCB,Hardfaced,Manual Handwheel,Normally Closed,Bottom Shell Coolant Drain
+V-VNT-01,L-208-3"-VT-08,3,Globe Valve,Class 300,WCB,Hardfaced,Manual Handwheel,Normally Closed,Top Shell Coolant Vent
